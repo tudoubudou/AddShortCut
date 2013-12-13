@@ -1,0 +1,7 @@
+.classpath
+default.properties
+gen
+bin
+.project
+lint.xml
+project.properties
