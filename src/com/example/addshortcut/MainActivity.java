@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.WallpaperManager;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -20,6 +23,7 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Parcel;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
@@ -33,6 +37,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
+    protected static final int NOTIFICATION_ID = 0;
     Button btn;
     Button btn2;
     Button btn3;
@@ -40,8 +45,10 @@ public class MainActivity extends Activity {
     Button btn5;
     Button btn6;
     Button btn7;
+    Button btn8;
     ImageView img;
     int count = 0;
+    int numNoti = 0;
     private android.content.ServiceConnection con = new android.content.ServiceConnection() {
 
         @Override
@@ -72,10 +79,12 @@ public class MainActivity extends Activity {
         btn5 = (Button) findViewById(R.id.button5);
         btn6 = (Button) findViewById(R.id.button6);
         btn7 = (Button) findViewById(R.id.button7);
+        btn8 = (Button) findViewById(R.id.button8);
         img = (ImageView) findViewById(R.id.myimage);
 
         Bitmap bm1 = null;
         Bitmap bm2 = null;
+        final Bitmap bm3;
         InputStream ip1 = null;
         InputStream ip2 = null;
         // StringBuffer sb = new
@@ -100,6 +109,7 @@ public class MainActivity extends Activity {
         } catch (IOException e1) {
             e1.printStackTrace();
         } finally {
+            bm3 = bm1;
             if (ip1 != null) {
                 try {
                     ip1.close();
@@ -353,8 +363,49 @@ public class MainActivity extends Activity {
             public void onClick(View v) {
                 // Toast.makeText(MainActivity.this, "stop service!",
                 // Toast.LENGTH_SHORT).show();
+                String contentTitle = "TestTitle";
+                String contentText = "TestText";
+                String tickerText = "有一个测试通知";
+                ComponentName c = new ComponentName("com.example.addshortcut","com.example.addshortcut.MainActivity");
+                Intent i = new Intent();
+                i.setComponent(c);
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                PendingIntent contentIntent = PendingIntent.getActivity(getApplicationContext(), 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+//                Notification notify  = new Notification();
+//                notify.icon = R.drawable.ic_launcher;
+//                notify.tickerText = tickerText;
+//                notify.when = System.currentTimeMillis();
+//                notify.defaults = Notification.DEFAULT_ALL;
+//                notify.number = ++numNoti;
+//                notify.setLatestEventInfo(getApplicationContext(), contentTitle, contentText, contentIntent);
+                NotificationCompat.Builder mNotifyBuilder = new NotificationCompat.Builder(getApplicationContext());
+                mNotifyBuilder.setAutoCancel(true);
+                mNotifyBuilder.setContentTitle(contentTitle);
+                mNotifyBuilder.setContentText(contentText);
+                mNotifyBuilder.setSmallIcon(R.drawable.ic_launcher);
+                mNotifyBuilder.setNumber(++numNoti);
+                mNotifyBuilder.setWhen(System.currentTimeMillis());
+                mNotifyBuilder.setTicker(tickerText);
+                mNotifyBuilder.setLargeIcon(bm3);
+                mNotifyBuilder.setContentIntent(contentIntent);
+                mNotifyBuilder.setDefaults(Notification.DEFAULT_ALL);
+                NotificationManager notiMgr = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+//                notiMgr.notify(NOTIFICATION_ID,notify);
+//                notiMgr.notify(numNoti,notify);
+                notiMgr.notify(numNoti,mNotifyBuilder.build());
             }
 
+        });
+        btn8.setOnClickListener(new OnClickListener() {
+            
+            public void onClick(View v) {
+                // Toast.makeText(MainActivity.this, "stop service!",
+                // Toast.LENGTH_SHORT).show();
+                NotificationManager notiMgr = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+//                notiMgr.cancel(NOTIFICATION_ID);
+                notiMgr.cancelAll();
+            }
+            
         });
     }
 
