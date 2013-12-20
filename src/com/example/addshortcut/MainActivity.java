@@ -34,6 +34,7 @@ import android.view.animation.Transformation;
 import android.view.animation.Animation.AnimationListener;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
@@ -47,6 +48,8 @@ public class MainActivity extends Activity {
     Button btn7;
     Button btn8;
     ImageView img;
+    TextView tx;
+    TextView tx2;
     int count = 0;
     int numNoti = 0;
     private android.content.ServiceConnection con = new android.content.ServiceConnection() {
@@ -81,7 +84,14 @@ public class MainActivity extends Activity {
         btn7 = (Button) findViewById(R.id.button7);
         btn8 = (Button) findViewById(R.id.button8);
         img = (ImageView) findViewById(R.id.myimage);
-
+        tx = (TextView) findViewById(R.id.textView1);
+        tx2 = (TextView) findViewById(R.id.textView2);
+        String tickerText = tx.getText().toString().substring(0, tx.getText().toString().lastIndexOf("#"));
+        if(tickerText.equals("")){
+            tx2.setText("true it's space");
+        } else {
+            tx2.setText(tickerText);
+        }
         Bitmap bm1 = null;
         Bitmap bm2 = null;
         final Bitmap bm3;
