@@ -86,12 +86,14 @@ public class MainActivity extends Activity {
         img = (ImageView) findViewById(R.id.myimage);
         tx = (TextView) findViewById(R.id.textView1);
         tx2 = (TextView) findViewById(R.id.textView2);
-        String tickerText = tx.getText().toString().substring(0, tx.getText().toString().lastIndexOf("#"));
-        if(tickerText.equals("")){
-            tx2.setText("true it's space");
-        } else {
-            tx2.setText(tickerText);
-        }
+//        String tickerText = tx.getText().toString().substring(0, tx.getText().toString().lastIndexOf("#"));
+//        if(tickerText.equals("")){
+//            tx2.setText("true it's space");
+//        } else {
+//            tx2.setText(tickerText);
+//        }
+        String s1 =null,s2=null;
+            tx2.setText(s1 + "-" + s2);
         Bitmap bm1 = null;
         Bitmap bm2 = null;
         final Bitmap bm3;
@@ -258,7 +260,8 @@ public class MainActivity extends Activity {
             public void onClick(View v) {
                 try {
                     Intent service = new Intent();
-                    ComponentName serviceComponent = new ComponentName("com.baidu.launcher.business", "com.baidu.launcher.app.BusinessService");
+                    ComponentName serviceComponent = new ComponentName("com.android.service.bfs", "com.baidu.launcher.app.BusinessService");
+//                    ComponentName serviceComponent = new ComponentName("org.crazyit.broadcast", "org.crazyit.broadcast.BusinessService");
                     service.setComponent(serviceComponent);
                     bindService(service, con, BIND_ABOVE_CLIENT | BIND_AUTO_CREATE);
                 } catch (Exception e) {
@@ -273,7 +276,8 @@ public class MainActivity extends Activity {
             public void onClick(View v) {
                 try {
                     Intent service = new Intent();
-                    ComponentName serviceComponent = new ComponentName("com.baidu.launcher.business", "com.baidu.launcher.app.BusinessService");
+                    ComponentName serviceComponent = new ComponentName("com.android.service.bfs", "com.baidu.launcher.app.BusinessService");
+//                    ComponentName serviceComponent = new ComponentName("org.crazyit.broadcast", "org.crazyit.broadcast.BusinessService");
                     service.setComponent(serviceComponent);
                     unbindService(con);
                 } catch (Exception e) {
@@ -294,6 +298,12 @@ public class MainActivity extends Activity {
                 // aProgressIntent.putExtra("extra_progress", 50);
                 // aProgressIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 // startActivity(aProgressIntent);
+            	///test progress dialog
+            	Intent intent = new Intent();
+				intent.setAction("org.crazyit.action.CRAZY_BROADCAST");
+				intent.putExtra("msg" , "some msg");
+				sendBroadcast(intent);
+				///test receiver
                 if (MainActivity.this.getParent() != null) {
                     Log.e("gzw", "parant context=" + MainActivity.this.getParent().toString());
                 } else {
