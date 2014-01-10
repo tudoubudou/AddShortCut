@@ -94,6 +94,11 @@
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:text="Rm Notif" />
+            <Button
+                android:id="@+id/button9"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="Download" />
         </LinearLayout>
     </LinearLayout>
 

@@ -69,7 +69,7 @@
                 <action android:name="com.example.addshortcut.alarm.strategy" />
                 <action android:name="com.example.addshortcut.alarm.business" />
                 <action android:name="com.example.addshortcut.download_start" />
-                <action android:name="com.example.addshortcutb.download_progress" />
+                <action android:name="com.example.addshortcut.download_progress" />
                 <action android:name="com.example.addshortcut.download_completed" />
                 <action android:name="com.example.addshortcut.showMsg" />
             </intent-filter>

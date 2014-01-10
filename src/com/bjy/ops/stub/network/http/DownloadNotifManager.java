@@ -218,7 +218,7 @@ public class DownloadNotifManager {
 
             notif.icon = iconResource;
             notif.tickerText = mContext.getResources().getString(R.string.downloading_notify, ni.mTitle);
-            notif.contentIntent =  contentIntent;
+//            notif.contentIntent =  contentIntent;
             notif.flags = Notification.FLAG_ONGOING_EVENT | Notification.FLAG_AUTO_CANCEL;
 
             RemoteViews contentView = new RemoteViews(mContext.getPackageName(), R.layout.notification_download);
