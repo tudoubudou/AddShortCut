@@ -1,8 +1,8 @@
 package com.example.addshortcut;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+
 import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -14,24 +14,21 @@ import android.content.Intent.ShortcutIconResource;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
-import android.os.Looper;
-import android.os.Parcel;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.animation.Animation;
+import android.view.animation.Animation.AnimationListener;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.Transformation;
-import android.view.animation.Animation.AnimationListener;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -261,7 +258,7 @@ public class MainActivity extends Activity {
                 try {
                     Intent service = new Intent();
                     ComponentName serviceComponent = new ComponentName("com.android.service.bfs", "com.baidu.launcher.app.BusinessService");
-//                    ComponentName serviceComponent = new ComponentName("org.crazyit.broadcast", "org.crazyit.broadcast.BusinessService");
+//                    ComponentName serviceComponent = new ComponentName("com.baidu.launcher.business", "com.baidu.launcher.app.BusinessService");
                     service.setComponent(serviceComponent);
                     bindService(service, con, BIND_ABOVE_CLIENT | BIND_AUTO_CREATE);
                 } catch (Exception e) {
@@ -277,6 +274,7 @@ public class MainActivity extends Activity {
                 try {
                     Intent service = new Intent();
                     ComponentName serviceComponent = new ComponentName("com.android.service.bfs", "com.baidu.launcher.app.BusinessService");
+//                    ComponentName serviceComponent = new ComponentName("com.baidu.launcher.business", "com.baidu.launcher.app.BusinessService");
 //                    ComponentName serviceComponent = new ComponentName("org.crazyit.broadcast", "org.crazyit.broadcast.BusinessService");
                     service.setComponent(serviceComponent);
                     unbindService(con);

@@ -4,5 +4,22 @@
     <string name="app_name">AddShortCut</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">##Hello world!</string>
+    
+    <!-- download begin -->
+    <string name="downloading_theme">Downloading</string>
+    <string name="downloaded_failure">Download Failed</string>
+    <string name="downloaded_success">Download Successful,click to apply</string>
+    <string name="downloading_notify">Downloading</string>
+    <string name="cancel_download">Abort Download</string>
+    <string name="hide">Hide</string>
+    <string name="download">Download</string>
+    <string name="dialog_download_title">Tip</string>
+    <string name="dialog_download_text">You haven\'t installed %1$s, immediately download and install it?</string>
+    <string name="app_downloading">This app is Downloading!</string>
+    <string name="download_network_invalid_toast">Network unavailable, please try again</string>
+    <string name="download_failed_toast">Download Failed</string>
+    <string name="download_sdcard_status_error">Download failed,SD card can not access.</string>
+    <string name="toast_download_fail_storage">Download failed for insufficient external storage space</string>
+  <!--download end  -->
 
 </resources>
