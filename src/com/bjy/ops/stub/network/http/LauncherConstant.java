@@ -1,6 +1,9 @@
 
 package com.bjy.ops.stub.network.http;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import android.net.Uri;
 
 public class LauncherConstant {
@@ -8,7 +11,7 @@ public class LauncherConstant {
     // db
     public static final String DATABASE_NAME = "launcher.db";
     public static final int DATABASE_VERSION = 14;
-    public static final String PACKAGENAME = "com.bjy.ops.stub";
+    public static final String PACKAGENAME = "com.example.addshortcut";
 
     public static final String AUTHORITY = PACKAGENAME + ".main.downloads";
     public static final String ID = "_id";
@@ -198,4 +201,6 @@ public class LauncherConstant {
     
     // time interval for broadcast
     public static final long TIME_INTERVAL = 300;
+    public final static ExecutorService mExecutorService = Executors.newCachedThreadPool();
+
 }

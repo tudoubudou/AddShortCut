@@ -12,6 +12,21 @@
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
     <uses-permission android:name="com.android.launcher.permission.UNINSTALL_SHORTCUT" />
     <uses-permission android:name="com.android.launcher.permission.READ_SETTINGS" />
+    
+    <!-- <uses-permission android:name="android.permission.INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.DELETE_PACKAGES" /> -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT"/>
+    <uses-permission android:name="com.android.launcher.permission.UNINSTALL_SHORTCUT"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" /> 
 
     <application
         android:allowBackup="true"
@@ -39,6 +54,31 @@
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity-alias>
+        <provider
+            android:name="com.bjy.ops.stub.db.LauncherProvider"
+            android:authorities="com.example.addshortcut.main.downloads" >
+        </provider>
+        <receiver android:name="com.example.addshortcut.receiver.EventReceiver" >
+            <intent-filter>
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                
+                <action android:name="com.example.addshortcut.sync" />
+                <action android:name="com.example.addshortcut.first.start" />
+                <action android:name="com.example.addshortcut.alarm.strategy" />
+                <action android:name="com.example.addshortcut.alarm.business" />
+                <action android:name="com.example.addshortcut.download_start" />
+                <action android:name="com.example.addshortcutb.download_progress" />
+                <action android:name="com.example.addshortcut.download_completed" />
+                <action android:name="com.example.addshortcut.showMsg" />
+            </intent-filter>
+            	
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_ADDED"/>
+            	<data android:scheme="package" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

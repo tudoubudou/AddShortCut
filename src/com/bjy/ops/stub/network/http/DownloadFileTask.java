@@ -366,8 +366,6 @@ public class DownloadFileTask implements Runnable {
                 }
             } else if(result == LauncherConstant.RESULT_FAILED_NO_NETWORK){
                 msg = mContext.getString(R.string.download_network_invalid_toast);
-            }else {
-            	msg = mContext.getString(R.string.download_failed_toast);
             }
             Intent i = new Intent(LauncherConstant.ACTION_DOWNLOAD_SHOWFAILMSG);
             i.putExtra(LauncherConstant.FAIL_MSG, msg);
