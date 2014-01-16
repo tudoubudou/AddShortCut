@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.example.addshortcut.utils.LogEx;
+
 public class DownloadFileManager {
     private static final String TAG = "DownloadFileManager";
 

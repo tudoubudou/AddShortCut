@@ -12,7 +12,7 @@ import android.widget.Toast;
 import com.bjy.ops.stub.network.http.DownloadFinishTask;
 import com.bjy.ops.stub.network.http.DownloadNotifManager;
 import com.bjy.ops.stub.network.http.LauncherConstant;
-import com.bjy.ops.stub.network.http.PhoneInfoStateManager;
+import com.example.addshortcut.utils.PhoneInfoStateManager;
 
 public class EventReceiver extends BroadcastReceiver {
     private static final String TAG = "EventReceiver";

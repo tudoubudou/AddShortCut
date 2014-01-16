@@ -16,7 +16,7 @@ import android.net.Uri;
 import android.text.TextUtils;
 
 import com.bjy.ops.stub.network.http.LauncherConstant;
-import com.bjy.ops.stub.network.http.LogEx;
+import com.example.addshortcut.utils.LogEx;
 
 
 public class LauncherProvider extends ContentProvider {

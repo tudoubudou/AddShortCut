@@ -29,6 +29,9 @@ import android.widget.RemoteViews;
 import java.text.DateFormat;
 import java.util.HashMap;
 import com.example.addshortcut.R;
+import com.example.addshortcut.utils.LogEx;
+import com.example.addshortcut.utils.PhoneInfoStateManager;
+import com.example.addshortcut.utils.StorageUtil;
 
 public class DownloadNotifManager {
     static final String TAG = "DownloadNotification";

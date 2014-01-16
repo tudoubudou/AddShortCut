@@ -1,11 +1,13 @@
 
-package com.bjy.ops.stub.network.http;
+package com.example.addshortcut.utils;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import android.content.res.Resources;
 //import android.content.pm.PackageParser;
 import android.os.Environment;
 import android.os.StatFs;
@@ -255,5 +257,38 @@ public class StorageUtil {
             return Environment.getExternalStorageDirectory().toString();
         }
         return null;
+    }
+    public static void copyAssetsFile(Resources res, String srcName, String dst) {
+        InputStream in = null;
+        FileOutputStream fos = null;
+        try {
+                in = res.getAssets().open(srcName);
+                byte[] buffer = new byte[1024 * 16];
+                fos = new FileOutputStream(dst);
+                int len = 0;
+
+                while ((len = in.read(buffer, 0, 1024 * 16)) > 0) {
+                    fos.write(buffer, 0, len);
+                }
+                fos.flush();
+                fos.getFD().sync();
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (fos != null) {
+                    fos.close();
+                }
+                if (in != null) {
+                    in.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

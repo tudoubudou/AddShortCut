@@ -28,6 +28,10 @@ import android.content.Intent;
 import android.os.SystemClock;
 import android.widget.Toast;
 import com.example.addshortcut.R;
+import com.example.addshortcut.utils.LogEx;
+import com.example.addshortcut.utils.PhoneInfoStateManager;
+import com.example.addshortcut.utils.StorageUtil;
+import com.example.addshortcut.utils.Utilities;
 
 public class DownloadFileTask implements Runnable {
     private static final String TAG = "DownloadFileTask";

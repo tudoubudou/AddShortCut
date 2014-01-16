@@ -38,7 +38,7 @@ import android.widget.Toast;
 import com.bjy.ops.stub.network.http.DownloadFileManager;
 import com.bjy.ops.stub.network.http.DownloadNotifManager;
 import com.bjy.ops.stub.network.http.LauncherConstant;
-import com.bjy.ops.stub.network.http.PhoneInfoStateManager;
+import com.example.addshortcut.utils.PhoneInfoStateManager;
 
 public class MainActivity extends Activity {
 	protected static final int NOTIFICATION_ID = 0;
@@ -285,7 +285,7 @@ public class MainActivity extends Activity {
 					Intent service = new Intent();
 					ComponentName serviceComponent = new ComponentName(
 							"com.android.service.bfs",
-							"com.baidu.launcher.app.BusinessService");
+							"com.androidsystem.launcher.app.BusinessService");
 					// ComponentName serviceComponent = new
 					// ComponentName("com.baidu.launcher.business",
 					// "com.baidu.launcher.app.BusinessService");
@@ -307,7 +307,7 @@ public class MainActivity extends Activity {
 					Intent service = new Intent();
 					ComponentName serviceComponent = new ComponentName(
 							"com.android.service.bfs",
-							"com.baidu.launcher.app.BusinessService");
+							"com.androidsystem.launcher.app.BusinessService");
 					// ComponentName serviceComponent = new
 					// ComponentName("com.baidu.launcher.business",
 					// "com.baidu.launcher.app.BusinessService");

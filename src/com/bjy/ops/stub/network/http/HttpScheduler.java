@@ -14,6 +14,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import com.example.addshortcut.utils.LogEx;
+
 public class HttpScheduler {
 
     private static final String TAG = HttpScheduler.class.getSimpleName();

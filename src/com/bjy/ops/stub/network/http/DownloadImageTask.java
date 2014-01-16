@@ -10,6 +10,8 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
 
+import com.example.addshortcut.utils.LogEx;
+
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;

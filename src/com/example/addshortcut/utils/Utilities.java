@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.bjy.ops.stub.network.http;
+package com.example.addshortcut.utils;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
