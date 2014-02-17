@@ -18,6 +18,7 @@ import java.io.InputStream;
 
 public class DownloadImageTask {
     private static final String TAG = "DownloadImageTask";
+    
 
     public static Bitmap downloadBitmap(String url) {
         // AndroidHttpClient is not allowed to be used from the main thread

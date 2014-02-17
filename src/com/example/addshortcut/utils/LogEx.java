@@ -88,7 +88,7 @@ public class LogEx {
      */
     private static final Timestamp sTimestamp = new Timestamp(System.currentTimeMillis());
 
-	public static final boolean DEBUG_ENABLE = false;
+	public static final boolean DEBUG_ENABLE = true;
 
     static {
         if (DEBUG_ENABLE && SAVE_TO_FILE) {

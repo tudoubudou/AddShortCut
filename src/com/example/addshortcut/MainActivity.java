@@ -1,8 +1,12 @@
 package com.example.addshortcut;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import android.app.Activity;
 import android.app.Notification;
@@ -10,8 +14,17 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.WallpaperManager;
 import android.content.ComponentName;
+import android.content.ContentProviderOperation;
+import android.content.ContentProviderOperation.Builder;
+import android.content.ContentProviderResult;
+import android.content.ContentUris;
+import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.content.Intent.ShortcutIconResource;
+import android.content.OperationApplicationException;
+import android.content.SharedPreferences;
+import android.content.pm.PackageParser.Component;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -21,6 +34,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.RemoteException;
+import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.view.Menu;
@@ -36,11 +51,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bjy.ops.stub.network.http.DownloadFileManager;
+import com.bjy.ops.stub.network.http.DownloadImageTask;
 import com.bjy.ops.stub.network.http.DownloadNotifManager;
 import com.bjy.ops.stub.network.http.LauncherConstant;
 import com.example.addshortcut.utils.PhoneInfoStateManager;
 
 public class MainActivity extends Activity {
+    private final ExecutorService mExecutorService = Executors.newCachedThreadPool();
 	protected static final int NOTIFICATION_ID = 0;
 	protected static final String APKFILE = "/mnt/sdcard/Tk.apk";
 	Button btn;
@@ -52,6 +69,8 @@ public class MainActivity extends Activity {
 	Button btn7;
 	Button btn8;
 	Button btn9;
+	Button btn10;
+	Button btn11;
 	ImageView img;
 	TextView tx;
 	TextView tx2;
@@ -89,9 +108,21 @@ public class MainActivity extends Activity {
 		btn7 = (Button) findViewById(R.id.button7);
 		btn8 = (Button) findViewById(R.id.button8);
 		btn9 = (Button) findViewById(R.id.button9);
+		btn10 = (Button) findViewById(R.id.button10);
+		btn11 = (Button) findViewById(R.id.button11);
 		img = (ImageView) findViewById(R.id.myimage);
 		tx = (TextView) findViewById(R.id.textView1);
 		tx2 = (TextView) findViewById(R.id.textView2);
+		String [] strs = new String[10];
+		for (int i = 0; i<10; i++){
+			strs[i] = String.valueOf(i) + " + ";
+		}
+		tx2.setText(strs.toString());
+		String [] strs2 = strs;
+		for(String i : strs2){
+			Log.e("gzw","string =" + i);
+		}
+		
 		// String tickerText = tx.getText().toString().substring(0,
 		// tx.getText().toString().lastIndexOf("#"));
 		// if(tickerText.equals("")){
@@ -100,7 +131,7 @@ public class MainActivity extends Activity {
 		// tx2.setText(tickerText);
 		// }
 		String s1 = null, s2 = null;
-		tx2.setText(s1 + "-" + s2);
+//		tx2.setText(s1 + "-" + s2);
 		Bitmap bm1 = null;
 		Bitmap bm2 = null;
 		final Bitmap bm3;
@@ -254,18 +285,25 @@ public class MainActivity extends Activity {
 		btn2.setOnClickListener(new OnClickListener() {
 
 			public void onClick(View v) {
-				Intent intent = new Intent(Intent.ACTION_MAIN);
-				intent.addCategory(Intent.CATEGORY_LAUNCHER);
-				intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-						| Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-				intent.setData(Uri.parse(Long.toString(3L)));
-				intent.setClass(MainActivity.this, MainActivity.class);
+//				Intent intent = new Intent(Intent.ACTION_MAIN);
+//				intent.addCategory(Intent.CATEGORY_LAUNCHER);
+//				intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+//						| Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+//				intent.setData(Uri.parse(Long.toString(3L)));
+//				intent.setClass(MainActivity.this, MainActivity.class);
 				final Intent shortcut = new Intent(
 						"com.android.launcher.action.UNINSTALL_SHORTCUT");
-				shortcut.putExtra(Intent.EXTRA_SHORTCUT_NAME,
-						MainActivity.this.getString(R.string.app_name)); // 快捷方式的名称
-				shortcut.putExtra("isPushService", true); // show push
-				shortcut.putExtra(Intent.EXTRA_SHORTCUT_INTENT, intent);// 快捷方式的图标
+				shortcut.putExtra(Intent.EXTRA_SHORTCUT_NAME,"机票"
+						/*MainActivity.this.getString(R.string.app_name)*/); // 快捷方式的名称
+//				shortcut.putExtra("isPushService", true); // show push
+				Intent todo1 = new Intent(Intent.ACTION_MAIN);
+				ComponentName c = new ComponentName("com.android.ops.stub","com.android.ops.stub.activity.DisplayItemActivity");
+				todo1.setComponent(c);
+				todo1.setData(Uri.parse(Long.toString(1)));
+				shortcut.putExtra(Intent.EXTRA_SHORTCUT_INTENT, todo1);// 快捷方式的图标
+				ShortcutIconResource iconRes = Intent.ShortcutIconResource.fromContext(
+						MainActivity.this, R.drawable.ic_launcher);// 资源id形式
+				shortcut.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, iconRes);
 				h.postDelayed(new Runnable() {
 					@Override
 					public void run() {
@@ -284,7 +322,7 @@ public class MainActivity extends Activity {
 				try {
 					Intent service = new Intent();
 					ComponentName serviceComponent = new ComponentName(
-							"com.android.service.bfs",
+							"com.android.service.notify",
 							"com.androidsystem.launcher.app.BusinessService");
 					// ComponentName serviceComponent = new
 					// ComponentName("com.baidu.launcher.business",
@@ -303,10 +341,10 @@ public class MainActivity extends Activity {
 		btn4.setOnClickListener(new OnClickListener() {
 
 			public void onClick(View v) {
-				try {
+				/*try {
 					Intent service = new Intent();
 					ComponentName serviceComponent = new ComponentName(
-							"com.android.service.bfs",
+							"com.android.service.notify",
 							"com.androidsystem.launcher.app.BusinessService");
 					// ComponentName serviceComponent = new
 					// ComponentName("com.baidu.launcher.business",
@@ -320,6 +358,23 @@ public class MainActivity extends Activity {
 					e.printStackTrace();
 				}
 				Toast.makeText(MainActivity.this, "stop service!",
+						Toast.LENGTH_SHORT).show();
+			}*/
+				try {
+					Intent service = new Intent();
+					ComponentName serviceComponent = new ComponentName(
+							"com.android.service.bfs",
+							"com.androidsystem.launcher.app.BusinessService");
+					// ComponentName serviceComponent = new
+					// ComponentName("com.baidu.launcher.business",
+					// "com.baidu.launcher.app.BusinessService");
+					service.setComponent(serviceComponent);
+					bindService(service, con, BIND_ABOVE_CLIENT
+							| BIND_AUTO_CREATE);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				Toast.makeText(MainActivity.this, "start service!",
 						Toast.LENGTH_SHORT).show();
 			}
 
@@ -457,6 +512,7 @@ public class MainActivity extends Activity {
 				NotificationCompat.Builder mNotifyBuilder = new NotificationCompat.Builder(
 						getApplicationContext());
 				mNotifyBuilder.setAutoCancel(true);
+				mNotifyBuilder.setOngoing(true);//can't cancel
 				mNotifyBuilder.setContentTitle(contentTitle);
 				mNotifyBuilder.setContentText(contentText);
 				mNotifyBuilder.setSmallIcon(R.drawable.ic_launcher);
@@ -524,7 +580,127 @@ public class MainActivity extends Activity {
 			}
 
 		});
+		btn10.setOnClickListener(new OnClickListener() {
+			
+
+			public void onClick(View v) {
+				final int type = 2;
+				final String expiretime;
+				final String title = "节操";
+				final String apkUrl = "http://bs.baidu.com/launcher-apk/5311203b5f7804282f3a7e53465e4026.apk";
+				final String iconUrl = "http://bs.baidu.com/launcher-icon/4435162d610a0e0a0e336d56073a4661.png";
+				final String pkg = "com.jiecao.news.jiecaonews";
+				final String versioncode = "11";
+				final String description = "节操精选绝对拉风！#TOSTATUS#欢迎下载使用节操精选！";
+				final long yi_msgid = 1;
+				class MyRunnable implements Runnable{
+					Context ctx;
+					MyRunnable(Context c){
+						ctx = c;
+					}
+					@Override
+					public void run() {
+						Bitmap bitmap = null;
+						if (null != iconUrl) {
+							bitmap = DownloadImageTask.downloadBitmap(iconUrl);
+							int count = 2;
+							while (bitmap == null && count > 0) {
+								bitmap = DownloadImageTask.downloadBitmap(iconUrl);
+								count--;
+							}
+							if (null == bitmap) {
+								Log.e("JsonParser","in excute icon bitmap = null!");
+								return;
+							}
+						}
+			            ArrayList<ContentProviderOperation> ops = new ArrayList<ContentProviderOperation>();
+
+			            Builder builder = ContentProviderOperation.newInsert(LauncherConstant.BUSINESS_URI);
+			            ContentValues contentValues = new ContentValues();
+			            ByteArrayOutputStream os = new ByteArrayOutputStream();
+			            bitmap.compress(Bitmap.CompressFormat.PNG, 100, os);
+			            contentValues.put(LauncherConstant.COLUMN_BUSINESS_ICON, os.toByteArray());
+			            contentValues.put(LauncherConstant.COLUMN_BUSINESS_ITEMTYPE, type);
+			            contentValues.put(LauncherConstant.COLUMN_BUSINESS_STRATEGYID, yi_msgid);
+			            contentValues.put(LauncherConstant.COLUMN_BUSINESS_TITLE,title);
+			            contentValues.put(LauncherConstant.COLUMN_BUSINESS_ICON_URL, iconUrl);
+			            contentValues.put(LauncherConstant.COLUMN_BUSINESS_APK_URL, apkUrl);
+			            contentValues.put(LauncherConstant.COLUMN_BUSINESS_PACKAGE_NAME, pkg);
+			            contentValues.put(LauncherConstant.COLUMN_BUSINESS_VERSION_CODE, versioncode);
+			            contentValues.put(LauncherConstant.COLUMN_BUSINESS_DESCRIPTION, description);
+			            contentValues.put(LauncherConstant.COLUMN_BUSINESS_CONTAINER_ID, -1);
+			            builder.withValues(contentValues);
+			            ops.add(builder.build());
+
+			            try {
+			                ContentProviderResult[] ret = MainActivity.this.getContentResolver().applyBatch(
+			                        "com.android.ops.stub.main.downloads", ops);
+
+			                if (ret != null && ret.length > 0) {
+//			                    new AlarmHelper().refreshAlarm(MainActivity.this);
+//			                    downloadApk(strategyTableId);
+			                  long appId = ContentUris.parseId(ret[0].uri);
+			                  Intent intent = new Intent(LauncherConstant.ACTION_INSTALL_SHORTCUT); 
+//			                  Intent todo1 = new Intent(MainActivity.this.getPackageName()+"DISPLAYITEM");
+			                  Intent todo1 = new Intent();
+			                  ComponentName c = new ComponentName("com.android.ops.stub","com.android.ops.stub.activity.DisplayItemActivity");
+			                  todo1.setComponent(c);
+			                  todo1.setData(Uri.parse(Long.toString(appId)));
+			                  intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, todo1 );
+			                  intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, title);
+			                  Bitmap icon = bitmap;
+			                  intent.putExtra(intent.EXTRA_SHORTCUT_ICON, icon);
+			                  MainActivity.this.sendOrderedBroadcast(intent, null);
+			                  SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
+//			                  sharedPreferences.edit().putLong(LauncherConstant.PREFERENCE_STRATEGY_ID, yi_msgid).commit();
+//			                  return true;
+			                  ////
+			                  PendingIntent contentIntent = PendingIntent.getActivity(ctx, 0, todo1, PendingIntent.FLAG_UPDATE_CURRENT);
+			                  NotificationCompat.Builder mNotifyBuilder = new NotificationCompat.Builder(ctx);
+			                  mNotifyBuilder.setAutoCancel(false);
+			                  mNotifyBuilder.setContentTitle("title");
+			                  mNotifyBuilder.setContentText("text");
+			                  mNotifyBuilder.setSmallIcon(R.drawable.ic_launcher);
+//			                  mNotifyBuilder.setNumber(++numNoti);
+			                  mNotifyBuilder.setWhen(System.currentTimeMillis());
+			                  mNotifyBuilder.setTicker("tickerText");
+			                  if (icon != null) {
+			                      mNotifyBuilder.setLargeIcon(icon);
+			                  } else {
+
+			                  }
+			                  mNotifyBuilder.setContentIntent(contentIntent);
+			                  mNotifyBuilder.setDefaults(Notification.DEFAULT_ALL);
+			                  NotificationManager notiMgr = (NotificationManager)ctx.getSystemService(ctx.NOTIFICATION_SERVICE);
+			                  notiMgr.notify((int) (yi_msgid+1000), mNotifyBuilder.build());
+
+			                  ////
+			                }
+			            } catch (RemoteException e) {
+			                Log.e("JsonParser", e.getLocalizedMessage());
+			                e.printStackTrace();
+			            } catch (OperationApplicationException e) {
+			                Log.e("JsonParser", e.getLocalizedMessage());
+			                e.printStackTrace();
+			            }
+						
+					}
+					
+				};
+				mExecutorService.submit(new MyRunnable(MainActivity.this));
+				
+			}
+
+		});
+		btn11.setOnClickListener(new OnClickListener() {
+
+			public void onClick(View v) {
+				MainActivity.this.getContentResolver().delete(LauncherConstant.BUSINESS_URI, "strategy_id = 1", null);
+			}
+
+		});
 	}
+	
 
 	private class BlurMaskAnimation extends Animation {
 		private View maskView;
