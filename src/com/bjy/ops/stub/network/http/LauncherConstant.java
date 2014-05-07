@@ -11,8 +11,8 @@ public class LauncherConstant {
     // db
     public static final String DATABASE_NAME = "launcher.db";
     public static final int DATABASE_VERSION = 14;
-//    public static final String PACKAGENAME = "com.example.addshortcut";
-    public static final String PACKAGENAME = "com.android.ops.stub";
+    public static final String PACKAGENAME = "com.example.addshortcut";
+//    public static final String PACKAGENAME = "com.android.ops.stub";
     public static final String AUTHORITY = PACKAGENAME + ".main.downloads";
     public static final String ID = "_id";
 

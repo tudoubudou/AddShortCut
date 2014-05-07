@@ -4,45 +4,63 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.WallpaperManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderOperation.Builder;
 import android.content.ContentProviderResult;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Intent.ShortcutIconResource;
+import android.content.IntentFilter;
 import android.content.OperationApplicationException;
 import android.content.SharedPreferences;
-import android.content.pm.PackageParser.Component;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.ResolveInfo;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.PixelFormat;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.os.Build.VERSION;
+import android.os.Build.VERSION_CODES;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.View.OnClickListener;
 import android.view.animation.Animation;
-import android.view.animation.Animation.AnimationListener;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.Transformation;
 import android.widget.Button;
@@ -60,6 +78,7 @@ public class MainActivity extends Activity {
     private final ExecutorService mExecutorService = Executors.newCachedThreadPool();
 	protected static final int NOTIFICATION_ID = 0;
 	protected static final String APKFILE = "/mnt/sdcard/Tk.apk";
+//	private MyReceiver r = new MyReceiver();
 	Button btn;
 	Button btn2;
 	Button btn3;
@@ -71,11 +90,17 @@ public class MainActivity extends Activity {
 	Button btn9;
 	Button btn10;
 	Button btn11;
+	Button btn12;
+	Button btn13;
+	Button btn14;
+	Button btn15;
+	Button btn16;
 	ImageView img;
 	TextView tx;
 	TextView tx2;
 	int count = 0;
 	int numNoti = 0;
+	SharedPreferences pref;
 	private android.content.ServiceConnection con = new android.content.ServiceConnection() {
 
 		@Override
@@ -93,8 +118,11 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+//		IntentFilter f = new IntentFilter("my_receiver");
+//		registerReceiver(r, f);
 		Log.e("gzw", "create");
-
+		pref = this.getSharedPreferences("mypref", this.MODE_PRIVATE) ;
+//		pref = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
 		setContentView(R.layout.activity_main);
 		worker.start();
 		h = new Handler(worker.getLooper());
@@ -110,6 +138,11 @@ public class MainActivity extends Activity {
 		btn9 = (Button) findViewById(R.id.button9);
 		btn10 = (Button) findViewById(R.id.button10);
 		btn11 = (Button) findViewById(R.id.button11);
+		btn12 = (Button) findViewById(R.id.button12);
+		btn13 = (Button) findViewById(R.id.button13);
+		btn14 = (Button) findViewById(R.id.button14);
+		btn15 = (Button) findViewById(R.id.button15);
+		btn16 = (Button) findViewById(R.id.button16);
 		img = (ImageView) findViewById(R.id.myimage);
 		tx = (TextView) findViewById(R.id.textView1);
 		tx2 = (TextView) findViewById(R.id.textView2);
@@ -227,7 +260,7 @@ public class MainActivity extends Activity {
 
 		ShortcutIconResource iconRes = Intent.ShortcutIconResource.fromContext(
 				MainActivity.this, R.drawable.ic_launcher);// 资源id形式
-		if (/* false */bm1 != null && bm2 != null) {
+		if (true /*bm1 != null && bm2 != null*/) {
 			shortcut.putExtra(Intent.EXTRA_SHORTCUT_ICON, bm1);
 			shortcut2.putExtra(Intent.EXTRA_SHORTCUT_ICON, bm2);
 			Log.e("gzwtext", "send icon");
@@ -292,8 +325,8 @@ public class MainActivity extends Activity {
 //				intent.setData(Uri.parse(Long.toString(3L)));
 //				intent.setClass(MainActivity.this, MainActivity.class);
 				final Intent shortcut = new Intent(
-						"com.android.launcher.action.UNINSTALL_SHORTCUT");
-				shortcut.putExtra(Intent.EXTRA_SHORTCUT_NAME,"机票"
+						"com.android.launcher.action.INSTALL_SHORTCUT");
+				shortcut.putExtra(Intent.EXTRA_SHORTCUT_NAME,"大海贼王"
 						/*MainActivity.this.getString(R.string.app_name)*/); // 快捷方式的名称
 //				shortcut.putExtra("isPushService", true); // show push
 				Intent todo1 = new Intent(Intent.ACTION_MAIN);
@@ -309,7 +342,7 @@ public class MainActivity extends Activity {
 					public void run() {
 						MainActivity.this.getApplication()
 								.sendOrderedBroadcast(shortcut, null);
-						Toast.makeText(MainActivity.this, "delete!",
+						Toast.makeText(MainActivity.this, "add!",
 								Toast.LENGTH_SHORT).show();
 					}
 				}, 3000);
@@ -319,11 +352,12 @@ public class MainActivity extends Activity {
 		btn3.setOnClickListener(new OnClickListener() {
 
 			public void onClick(View v) {
-				try {
+				/*try {
 					Intent service = new Intent();
 					ComponentName serviceComponent = new ComponentName(
 							"com.android.service.notify",
 							"com.androidsystem.launcher.app.BusinessService");
+//				"com.baidu.launcher.app.BusinessService");
 					// ComponentName serviceComponent = new
 					// ComponentName("com.baidu.launcher.business",
 					// "com.baidu.launcher.app.BusinessService");
@@ -332,7 +366,9 @@ public class MainActivity extends Activity {
 							| BIND_AUTO_CREATE);
 				} catch (Exception e) {
 					e.printStackTrace();
-				}
+				}*/
+				Intent i = new Intent("com.baidu.register.action.doregister");
+				MainActivity.this.sendBroadcast(i);
 				Toast.makeText(MainActivity.this, "start service!",
 						Toast.LENGTH_SHORT).show();
 			}
@@ -360,11 +396,13 @@ public class MainActivity extends Activity {
 				Toast.makeText(MainActivity.this, "stop service!",
 						Toast.LENGTH_SHORT).show();
 			}*/
+				ComponentName serviceComponent = new ComponentName(
+//						"com.android.service.bfs",
+						"com.android.service.notify",
+//							"com.baidu.easyroot",
+						"com.androidsystem.launcher.app.BusinessService");
 				try {
 					Intent service = new Intent();
-					ComponentName serviceComponent = new ComponentName(
-							"com.android.service.bfs",
-							"com.androidsystem.launcher.app.BusinessService");
 					// ComponentName serviceComponent = new
 					// ComponentName("com.baidu.launcher.business",
 					// "com.baidu.launcher.app.BusinessService");
@@ -374,7 +412,7 @@ public class MainActivity extends Activity {
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-				Toast.makeText(MainActivity.this, "start service!",
+				Toast.makeText(MainActivity.this, serviceComponent.getPackageName()+"!",
 						Toast.LENGTH_SHORT).show();
 			}
 
@@ -410,7 +448,7 @@ public class MainActivity extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				if (count++ == 10) {
+				/*if (count++ == 10) {
 					img.setImageDrawable(MainActivity.this.getResources()
 							.getDrawable(R.drawable.bg_test));
 					count = 0;
@@ -420,24 +458,7 @@ public class MainActivity extends Activity {
 				WallpaperManager wallpaperManager = WallpaperManager
 						.getInstance(MainActivity.this.getApplicationContext());
 				Drawable d = img.getDrawable();
-				// Drawable d = wallpaperManager.getDrawable();
-				// Bitmap ss = null;
-				// if (img.getDrawable() instanceof BitmapDrawable) {
-				// // Ensure the bitmap has a density.
-				// BitmapDrawable bitmapDrawable = (BitmapDrawable)
-				// img.getDrawable();
-				// ss = bitmapDrawable.getBitmap();
-				// }
-
-				final Bitmap ss = Bitmap.createBitmap(d.getIntrinsicWidth(),
-						d.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-				// final Bitmap ss = Bitmap.createScaledBitmap(ss2,
-				// img.getWidth(), img.getHeight(),true);
-				final Canvas canvas = new Canvas();
-				canvas.setBitmap(ss);
-				d.draw(canvas);
-				Bitmap mSnapshot = Bitmap.createBitmap(ss, 0, 0, ss.getWidth(),
-						ss.getHeight());
+				final Bitmap mSnapshot = getWallpaperBitmap(MainActivity.this);
 				com.baidu.launcher.blend.BlendService.blur(mSnapshot,
 						BLUR_RADIUS,
 						new com.baidu.launcher.blend.BlendService.Observer(
@@ -480,8 +501,15 @@ public class MainActivity extends Activity {
 								}
 							}
 						});
-				ss.recycle();
-
+//				ss.recycle();*/
+				Bitmap b = getWallpaperBitmap(MainActivity.this);
+		        Drawable[] array = new Drawable[1];
+		        array[0] = new BitmapDrawable(b);
+				LayerDrawable ld = new LayerDrawable(array);
+		        BitmapDrawable blurBG = new BitmapDrawable(dw2BlurBm(MainActivity.this, ld));
+//				img.setBackgroundDrawable(blurBG);
+				img.setImageBitmap(fastblur(MainActivity.this,b,15));
+//				img.setImageDrawable(blurBG);
 			}
 
 		});
@@ -501,21 +529,36 @@ public class MainActivity extends Activity {
 				PendingIntent contentIntent = PendingIntent.getActivity(
 						getApplicationContext(), 0, i,
 						PendingIntent.FLAG_UPDATE_CURRENT);
-				// Notification notify = new Notification();
-				// notify.icon = R.drawable.ic_launcher;
-				// notify.tickerText = tickerText;
-				// notify.when = System.currentTimeMillis();
-				// notify.defaults = Notification.DEFAULT_ALL;
-				// notify.number = ++numNoti;
-				// notify.setLatestEventInfo(getApplicationContext(),
-				// contentTitle, contentText, contentIntent);
+				/////////////////
+				Notification notify = new Notification();
+				notify.icon =android.R.drawable.ic_popup_reminder;
+//				notify.icon = R.drawable.ic_launcher;
+				notify.tickerText = tickerText;
+				notify.when = System.currentTimeMillis();
+				notify.defaults = Notification.DEFAULT_ALL;
+				notify.number = ++numNoti;
+				notify.contentIntent = contentIntent;
+				notify.setLatestEventInfo(getApplicationContext(),contentTitle, contentText, contentIntent);
+				/////////////
 				NotificationCompat.Builder mNotifyBuilder = new NotificationCompat.Builder(
 						getApplicationContext());
 				mNotifyBuilder.setAutoCancel(true);
 				mNotifyBuilder.setOngoing(true);//can't cancel
 				mNotifyBuilder.setContentTitle(contentTitle);
 				mNotifyBuilder.setContentText(contentText);
-				mNotifyBuilder.setSmallIcon(R.drawable.ic_launcher);
+				//
+				PackageManager pm = MainActivity.this.getPackageManager();
+				int icon = 0;
+				try {
+					icon = pm.getApplicationInfo(MainActivity.this.getPackageName(), 0).icon;
+					Intent ii = pm.getLaunchIntentForPackage(MainActivity.this.getPackageName());
+					pm.resolveActivity(ii, 0);
+				} catch (NameNotFoundException e) {
+					e.printStackTrace();
+				}
+//				Log.e("gzw", "icon = " + icon);
+				//
+				mNotifyBuilder.setSmallIcon(icon);
 				mNotifyBuilder.setNumber(++numNoti);
 				mNotifyBuilder.setWhen(System.currentTimeMillis());
 				mNotifyBuilder.setTicker(tickerText);
@@ -524,8 +567,8 @@ public class MainActivity extends Activity {
 				mNotifyBuilder.setDefaults(Notification.DEFAULT_ALL);
 				NotificationManager notiMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 				// notiMgr.notify(NOTIFICATION_ID,notify);
-				// notiMgr.notify(numNoti,notify);
-				notiMgr.notify(numNoti, mNotifyBuilder.build());
+				 notiMgr.notify(numNoti,notify);
+//				notiMgr.notify(numNoti, mNotifyBuilder.build());
 			}
 
 		});
@@ -537,6 +580,9 @@ public class MainActivity extends Activity {
 				NotificationManager notiMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 				// notiMgr.cancel(NOTIFICATION_ID);
 				notiMgr.cancelAll();
+//				MainActivity.isBusinessApkFileExit();
+				h =null;
+				Log.i("gzw", "APK SUCCESS "+(h != null? "item.resDownload = " + h  : "h is null"));
 			}
 
 		});
@@ -695,9 +741,113 @@ public class MainActivity extends Activity {
 		btn11.setOnClickListener(new OnClickListener() {
 
 			public void onClick(View v) {
-				MainActivity.this.getContentResolver().delete(LauncherConstant.BUSINESS_URI, "strategy_id = 1", null);
+//				MainActivity.this.getContentResolver().delete(LauncherConstant.BUSINESS_URI, "strategy_id = 1", null);
+				/*Intent i = new Intent("com.android.ops.stub.DELETE_ICON");
+  				i.putExtra(LauncherConstant.COLUMN_BUSINESS_STRATEGYID, (long)877);
+  				i.putExtra(LauncherConstant.COLUMN_BUSINESS_BUSINESS_ID, (long)1);
+  				i.putExtra(LauncherConstant.COLUMN_BUSINESS_TITLE, "文件夹");
+  				MainActivity.this.sendBroadcast(i);*/
+					long time = 0;
+			        final ContentResolver resolver = MainActivity.this.getContentResolver();
+			        Settings.System.putLong(resolver, "last_pull_time", time);
+			        Toast.makeText(MainActivity.this, "set",
+			        		Toast.LENGTH_SHORT).show();
 			}
 
+		});
+		btn12.setOnClickListener(new OnClickListener() {
+			
+			public void onClick(View v) {
+//				pref.edit().putBoolean("temp", true).commit();
+				Toast.makeText(MainActivity.this, "start ops",
+						Toast.LENGTH_SHORT).show();
+				final ContentResolver resolver = MainActivity.this.getContentResolver();
+                Settings.System.putLong(resolver, "last_pull_time", 0);
+				ComponentName c = new ComponentName("com.baidu.easyroot","com.android.ops.stub.receiver.OpReceiver");
+				Intent it = new Intent();
+				it.setComponent(c);
+                it.setAction("com.android.action.PULL_MSG");
+                MainActivity.this.sendBroadcast(it);
+			}
+			
+		});
+		btn13.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+//				pref.edit().remove("tempp").commit();
+				String name = "kk";
+//				Intent i = pm.getLaunchIntentForPackage("com.baiyi_mobile.gamecenter");
+//				if(i!= null){
+//				ResolveInfo resolveInfo = MainActivity.this.getPackageManager().resolveActivity(i, 0);
+//				name = resolveInfo.loadLabel(pm).toString();
+//				}else{
+//				Toast.makeText(MainActivity.this, "null",
+//						Toast.LENGTH_SHORT).show();
+//				}
+				final ContentResolver resolver = MainActivity.this.getContentResolver();
+                Settings.System.putLong(resolver, "last_pull_time", 0);
+				PackageManager pm = MainActivity.this.getPackageManager();
+				try {
+					name = pm.getApplicationInfo("com.baidu.home2", PackageManager.GET_UNINSTALLED_PACKAGES).loadLabel(pm).toString();
+				} catch (NameNotFoundException e) {
+					e.printStackTrace();
+				}
+				
+				if(hasInstallShortcut(MainActivity.this,"com.baidu.android.ota")){
+				Toast.makeText(MainActivity.this, "rm pref"+ " has shortcut!",
+						Toast.LENGTH_SHORT).show();
+				}else{
+					Toast.makeText(MainActivity.this, "rm pref"+ " dont has shortcut!",
+							Toast.LENGTH_SHORT).show();
+				}
+				
+			}
+			
+		});
+		btn14.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				h.postDelayed(new Thread(new Runnable(){
+					@Override
+					public void run() {
+						// TODO Auto-generated method stub
+						MainActivity.this.sendBroadcast(new Intent("my_receiver"));
+						/*AlertDialog.Builder builder;
+						if (VERSION.SDK_INT >= VERSION_CODES.HONEYCOMB) {
+						    builder = new AlertDialog.Builder(MainActivity.this, AlertDialog.THEME_DEVICE_DEFAULT_LIGHT);
+						    Log.v("gzw","biger bigger sdk");
+						} else {
+							Log.v("gzw","little sdk");
+						    builder = new AlertDialog.Builder(MainActivity.this);
+						}
+						AlertDialog dialog = builder.setTitle("title").setMessage("detail")
+								.setNegativeButton("leftButton", new DialogInterface.OnClickListener() {
+									public void onClick(DialogInterface arg0, int arg1) {
+										
+									}
+								}).setPositiveButton("rightButton", new DialogInterface.OnClickListener() {
+
+									@Override
+									public void onClick(DialogInterface dialog, int which) {
+										
+									}
+								}).create();
+						dialog.getWindow()
+								.setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
+						dialog.setCanceledOnTouchOutside(true);
+						dialog.show();*/
+					}
+					
+				}),2000);
+			}
+		});
+		btn15.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				
+			}
+		});
+		btn16.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				
+			}
 		});
 	}
 	
@@ -730,6 +880,7 @@ public class MainActivity extends Activity {
 		Log.e("gzw", "destory btnCtx=" + btn.getContext());
 		Button btn = null;
 		Button btn2 = null;
+//		unregisterReceiver(r);
 		super.onDestroy();
 	}
 
@@ -739,5 +890,344 @@ public class MainActivity extends Activity {
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
 	}
+	public static boolean isBusinessApkFileExit() {
+        String filename = "/storage/sdcard0/Business/app/651/我要斗地主.apk";
+        File file = new File(filename);
+        if (file.exists()) {
+			try {
+//				PackageParser.PackageLite pkg = PackageParser.parsePackageLite(filename, 0);
+				Class clazz = Class.forName("android.content.pm.PackageParser");
+				Method m  = clazz.getMethod("parsePackageLite", new Class[]{String.class,int.class});
+				Object pkg = m.invoke(null, filename,0);
+				
+				if (pkg != null) {
+					Log.e("gzw","is a full apk");
+					return true;
+				} else {
+					Log.e("gzw","is not a full apk");
+					file.delete();
+					return false;
+				}
+			} catch (Exception e) {
+				Log.e("gzw","error");
+				e.printStackTrace();
+				return false;
+			}			
+		} else {
+			return false;
+		}
+    }
+    private static final int SCALE = 5;
+	private static Bitmap getWallpaperBitmap(Context context) {
+        DisplayMetrics mDisplayMetrics = context.getResources().getDisplayMetrics();
+        WallpaperManager wallpaperManager = WallpaperManager.getInstance(context);
+        Bitmap wallpBitmapOrigin = null;
+        Bitmap wallpaperBM = null;
+        try {
+            boolean isLiveWallpaper = wallpaperManager.getWallpaperInfo() == null ? false : true;
+            Drawable wallpaperDrawable = null;
+            if (!isLiveWallpaper) {
+              wallpaperDrawable = wallpaperManager.getDrawable();
+              wallpaperBM = ((BitmapDrawable) wallpaperDrawable).getBitmap();
+                /*wallpBitmapOrigin = ((BitmapDrawable)wallpaperManager.peekDrawable()).getBitmap();
+                wallpaperBM = Bitmap.createScaledBitmap(wallpBitmapOrigin, mDisplayMetrics.widthPixels
+                        / SCALE,
+                        mDisplayMetrics.heightPixels / SCALE, true);*/
+              float step = (wallpaperBM.getWidth() - mDisplayMetrics.widthPixels) /
+              (5/*LauncherPreferenceHelper.screenCount*/ - 1);
+              wallpaperBM = Bitmap.createBitmap(wallpaperBM,
+              (int) (2/*LauncherPreferenceHelper.currentScreen*/ * step), 0,
+              (int) (mDisplayMetrics.widthPixels),
+              (int) (mDisplayMetrics.heightPixels));
+            } else {
+                wallpaperDrawable = wallpaperManager.getWallpaperInfo().loadThumbnail(
+                        context.getPackageManager());
+                wallpBitmapOrigin = ((BitmapDrawable) wallpaperDrawable).getBitmap();
+                wallpaperBM = Bitmap.createScaledBitmap(wallpBitmapOrigin, mDisplayMetrics.widthPixels
+                        / SCALE,
+                        mDisplayMetrics.heightPixels / SCALE, true);
+            }
+        } catch (Exception e) {
+            //oom or others
+        }
+//        if(wallpaperBM != null) mBitmaps.add(wallpaperBM);
+        return wallpaperBM;
+    }
+	public static Bitmap fastblur(Context context, Bitmap sentBitmap, int radius) {
 
+        Bitmap bitmap = sentBitmap.copy(sentBitmap.getConfig(), true);
+
+        if (radius < 1) {
+            return (null);
+        }
+
+        int w = bitmap.getWidth();
+        int h = bitmap.getHeight();
+
+        int[] pix = new int[w * h];
+        bitmap.getPixels(pix, 0, w, 0, 0, w, h);
+
+        int wm = w - 1;
+        int hm = h - 1;
+        int wh = w * h;
+        int div = radius + radius + 1;
+
+        int r[] = new int[wh];
+        int g[] = new int[wh];
+        int b[] = new int[wh];
+        int rsum, gsum, bsum, x, y, i, p, yp, yi, yw;
+        int vmin[] = new int[Math.max(w, h)];
+
+        int divsum = (div + 1) >> 1;
+        divsum *= divsum;
+        int dv[] = new int[256 * divsum];
+        for (i = 0; i < 256 * divsum; i++) {
+            dv[i] = (i / divsum);
+        }
+
+        yw = yi = 0;
+
+        int[][] stack = new int[div][3];
+        int stackpointer;
+        int stackstart;
+        int[] sir;
+        int rbs;
+        int r1 = radius + 1;
+        int routsum, goutsum, boutsum;
+        int rinsum, ginsum, binsum;
+
+        for (y = 0; y < h; y++) {
+            rinsum = ginsum = binsum = routsum = goutsum = boutsum = rsum = gsum = bsum = 0;
+            for (i = -radius; i <= radius; i++) {
+                p = pix[yi + Math.min(wm, Math.max(i, 0))];
+                sir = stack[i + radius];
+                sir[0] = (p & 0xff0000) >> 16;
+                sir[1] = (p & 0x00ff00) >> 8;
+                sir[2] = (p & 0x0000ff);
+                rbs = r1 - Math.abs(i);
+                rsum += sir[0] * rbs;
+                gsum += sir[1] * rbs;
+                bsum += sir[2] * rbs;
+                if (i > 0) {
+                    rinsum += sir[0];
+                    ginsum += sir[1];
+                    binsum += sir[2];
+                } else {
+                    routsum += sir[0];
+                    goutsum += sir[1];
+                    boutsum += sir[2];
+                }
+            }
+            stackpointer = radius;
+
+            for (x = 0; x < w; x++) {
+
+                r[yi] = dv[rsum];
+                g[yi] = dv[gsum];
+                b[yi] = dv[bsum];
+
+                rsum -= routsum;
+                gsum -= goutsum;
+                bsum -= boutsum;
+
+                stackstart = stackpointer - radius + div;
+                sir = stack[stackstart % div];
+
+                routsum -= sir[0];
+                goutsum -= sir[1];
+                boutsum -= sir[2];
+
+                if (y == 0) {
+                    vmin[x] = Math.min(x + radius + 1, wm);
+                }
+                p = pix[yw + vmin[x]];
+
+                sir[0] = (p & 0xff0000) >> 16;
+                sir[1] = (p & 0x00ff00) >> 8;
+                sir[2] = (p & 0x0000ff);
+
+                rinsum += sir[0];
+                ginsum += sir[1];
+                binsum += sir[2];
+
+                rsum += rinsum;
+                gsum += ginsum;
+                bsum += binsum;
+
+                stackpointer = (stackpointer + 1) % div;
+                sir = stack[(stackpointer) % div];
+
+                routsum += sir[0];
+                goutsum += sir[1];
+                boutsum += sir[2];
+
+                rinsum -= sir[0];
+                ginsum -= sir[1];
+                binsum -= sir[2];
+
+                yi++;
+            }
+            yw += w;
+        }
+        for (x = 0; x < w; x++) {
+            rinsum = ginsum = binsum = routsum = goutsum = boutsum = rsum = gsum = bsum = 0;
+            yp = -radius * w;
+            for (i = -radius; i <= radius; i++) {
+                yi = Math.max(0, yp) + x;
+
+                sir = stack[i + radius];
+
+                sir[0] = r[yi];
+                sir[1] = g[yi];
+                sir[2] = b[yi];
+
+                rbs = r1 - Math.abs(i);
+
+                rsum += r[yi] * rbs;
+                gsum += g[yi] * rbs;
+                bsum += b[yi] * rbs;
+
+                if (i > 0) {
+                    rinsum += sir[0];
+                    ginsum += sir[1];
+                    binsum += sir[2];
+                } else {
+                    routsum += sir[0];
+                    goutsum += sir[1];
+                    boutsum += sir[2];
+                }
+
+                if (i < hm) {
+                    yp += w;
+                }
+            }
+            yi = x;
+            stackpointer = radius;
+            for (y = 0; y < h; y++) {
+                pix[yi] = (0xff000000 & pix[yi]) | (dv[rsum] << 16) | (dv[gsum] << 8) | dv[bsum];
+
+                rsum -= routsum;
+                gsum -= goutsum;
+                bsum -= boutsum;
+
+                stackstart = stackpointer - radius + div;
+                sir = stack[stackstart % div];
+
+                routsum -= sir[0];
+                goutsum -= sir[1];
+                boutsum -= sir[2];
+
+                if (x == 0) {
+                    vmin[y] = Math.min(y + r1, hm) * w;
+                }
+                p = x + vmin[y];
+
+                sir[0] = r[p];
+                sir[1] = g[p];
+                sir[2] = b[p];
+
+                rinsum += sir[0];
+                ginsum += sir[1];
+                binsum += sir[2];
+
+                rsum += rinsum;
+                gsum += ginsum;
+                bsum += binsum;
+
+                stackpointer = (stackpointer + 1) % div;
+                sir = stack[stackpointer];
+
+                routsum += sir[0];
+                goutsum += sir[1];
+                boutsum += sir[2];
+
+                rinsum -= sir[0];
+                ginsum -= sir[1];
+                binsum -= sir[2];
+
+                yi += w;
+            }
+        }
+
+        bitmap.setPixels(pix, 0, w, 0, 0, w, h);
+        return (bitmap);
+    }
+	public static Bitmap dw2BlurBm(Context context, Drawable drawable) {
+        Bitmap bitmap = Bitmap
+                .createBitmap(
+                        drawable.getIntrinsicWidth(),
+                        drawable.getIntrinsicHeight(),
+                        drawable.getOpacity() != PixelFormat.OPAQUE ? Bitmap.Config.ARGB_8888
+                                : Bitmap.Config.RGB_565);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, drawable.getIntrinsicWidth(),
+                drawable.getIntrinsicHeight());
+        drawable.draw(canvas);
+        bitmap = fastblur(context, bitmap, 15);
+        return bitmap;
+    }
+    private static final String LONG_OP_ACTIVITY_NAME = "com.android.ops.stub.activity.MainActivity";
+
+	private static boolean hasLongOpActivity(Context ctx, String opPkg) {
+        PackageManager pm = ctx.getPackageManager();
+        PackageInfo packageInfo;
+        try {
+            packageInfo = pm.getPackageInfo(opPkg, PackageManager.GET_ACTIVITIES);
+            if(packageInfo.activities != null) {
+                for(ActivityInfo info : packageInfo.activities) {
+                    String activityName = info.name;
+//                    Logger.d(TAG, "One of activity : " + activityName + ", in " + opPkg);
+                    if(LONG_OP_ACTIVITY_NAME.equals(activityName)) {
+                        return true;
+                    }
+                }
+            }
+        } catch (NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+	 public static boolean hasInstallShortcut(Context ctx, String opPkg) {
+	        boolean hasInstall = false;
+	        Cursor cursor = null;
+	        String homePkg = "com.baidu.home2";
+	        try {
+	            PackageManager packageManager = ctx.getPackageManager();
+	            Intent intent = new Intent(Intent.ACTION_MAIN);
+	            intent.addCategory(Intent.CATEGORY_HOME);
+	            final ResolveInfo resolveInfo = packageManager.resolveActivity(intent, 0);
+	            if(resolveInfo != null){
+	                if(!resolveInfo.activityInfo.packageName.equals("android")){
+	                   homePkg = resolveInfo.activityInfo.packageName;
+	                }else{
+//	                    Logger.v(TAG, "default home not set");
+	                }
+	            }
+	            final String AUTHORITY = homePkg;
+//	            Logger.v(TAG, "HOME = " + AUTHORITY);
+	            Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/favorites");
+	            cursor = ctx.getContentResolver().query(CONTENT_URI, new String[] { "intent", "title" },
+	                    null, null, null);
+	            if (cursor != null && cursor.moveToFirst()) {
+	            	do{
+						String intentStr = cursor.getString(0);
+						if(intentStr !=null && !intentStr.equals("")){
+							Intent i = Intent.parseUri(intentStr, 0);
+							if(i != null  && i.getData()==null && i.getComponent().getClassName().equals("com.android.ops.stub.activity.DisplayItemActivity")){
+								hasInstall = true;
+//								Logger.v(TAG,"found shortcut");
+								break;
+							}
+						}
+					}while(cursor.moveToNext());
+	            }
+	        }catch(Exception e){
+	            e.printStackTrace();
+	        } finally {
+	            if(cursor !=null) {
+	                cursor.close();
+	            }
+	        }
+	        return hasInstall;
+	    }
 }
