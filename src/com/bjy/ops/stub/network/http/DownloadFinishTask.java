@@ -10,7 +10,7 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.PackageParser;
+//import android.content.pm.PackageParser;
 //import android.content.pm.PackageParser;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.Uri;
@@ -50,7 +50,7 @@ public class DownloadFinishTask implements Runnable {
         context.startActivity(intent);
     }
     public synchronized static void installAppInSilent(Context context, String path) {
-//  	Toast.makeText(context, R.string.toast_update_start, Toast.LENGTH_SHORT).show();
+/*//  	Toast.makeText(context, R.string.toast_update_start, Toast.LENGTH_SHORT).show();
   	PackageManager pm = context.getPackageManager();
   	int installFlags = 0;
   	final File sourceFile = new File(path);
@@ -65,9 +65,9 @@ public class DownloadFinishTask implements Runnable {
   		}
   	} catch (NameNotFoundException e) {
   	}
-  	pm.installPackage(Uri.fromFile(new File(path)), null, installFlags, context.getPackageName());
+  	pm.installPackage(Uri.fromFile(new File(path)), null, installFlags, context.getPackageName());*/
   }
-    public static PackageParser.Package getPackageInfo(File sourceFile) {
+/*    public static PackageParser.Package getPackageInfo(File sourceFile) {
         final String archiveFilePath = sourceFile.getAbsolutePath();
         PackageParser packageParser = new PackageParser(archiveFilePath);
         DisplayMetrics metrics = new DisplayMetrics();
@@ -77,5 +77,5 @@ public class DownloadFinishTask implements Runnable {
         // Nuke the parser reference.
         packageParser = null;
         return pkg;
-    }
+    }*/
 }

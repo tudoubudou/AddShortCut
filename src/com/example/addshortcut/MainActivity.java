@@ -5,17 +5,17 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.WallpaperManager;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderOperation.Builder;
@@ -24,10 +24,8 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Intent.ShortcutIconResource;
-import android.content.IntentFilter;
 import android.content.OperationApplicationException;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
@@ -39,32 +37,36 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.PixelFormat;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.os.Build.VERSION;
-import android.os.Build.VERSION_CODES;
 import android.preference.PreferenceManager;
+import android.provider.MediaStore.Files;
 import android.provider.Settings;
-import android.support.v4.app.NotificationCompat;
+//import android.support.v4.app.NotificationCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
-import android.view.WindowManager;
 import android.view.View.OnClickListener;
 import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.Transformation;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -73,11 +75,16 @@ import com.bjy.ops.stub.network.http.DownloadImageTask;
 import com.bjy.ops.stub.network.http.DownloadNotifManager;
 import com.bjy.ops.stub.network.http.LauncherConstant;
 import com.example.addshortcut.utils.PhoneInfoStateManager;
+import com.example.addshortcut.utils.StorageUtil;
 
 public class MainActivity extends Activity {
+	private final String TAG = MainActivity.class.getSimpleName();
     private final ExecutorService mExecutorService = Executors.newCachedThreadPool();
 	protected static final int NOTIFICATION_ID = 0;
 	protected static final String APKFILE = "/mnt/sdcard/Tk.apk";
+    private static Paint paint = new Paint();
+    private static BitmapDrawable mFolderPic;
+    private static Canvas sCanvas = new Canvas();
 //	private MyReceiver r = new MyReceiver();
 	Button btn;
 	Button btn2;
@@ -96,6 +103,7 @@ public class MainActivity extends Activity {
 	Button btn15;
 	Button btn16;
 	ImageView img;
+	ProgressBar pbar;
 	TextView tx;
 	TextView tx2;
 	int count = 0;
@@ -146,6 +154,9 @@ public class MainActivity extends Activity {
 		img = (ImageView) findViewById(R.id.myimage);
 		tx = (TextView) findViewById(R.id.textView1);
 		tx2 = (TextView) findViewById(R.id.textView2);
+		pbar = (ProgressBar) findViewById(R.id.progressBar1);
+		pbar.setMax(100);;
+		pbar.setProgress(50);
 		String [] strs = new String[10];
 		for (int i = 0; i<10; i++){
 			strs[i] = String.valueOf(i) + " + ";
@@ -189,6 +200,7 @@ public class MainActivity extends Activity {
 			bm1 = BitmapFactory.decodeStream(ip1);
 			int width = (int) (this.getResources().getDisplayMetrics().density * 48);
 			bm1 = Bitmap.createScaledBitmap(bm1, width, width, true);
+			bm1 = cutBitmap(MainActivity.this,bm1);
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		} finally {
@@ -367,9 +379,10 @@ public class MainActivity extends Activity {
 				} catch (Exception e) {
 					e.printStackTrace();
 				}*/
-				Intent i = new Intent("com.baidu.register.action.doregister");
-				MainActivity.this.sendBroadcast(i);
-				Toast.makeText(MainActivity.this, "start service!",
+				Intent i = new Intent("com.android.service.memmagr.optimization_clear_bgapps");
+//				Intent i = new Intent("com.android.service.memmagr.action.LAUNCH_REGISTER_SERVICE");
+				MainActivity.this.startService(i);
+				Toast.makeText(MainActivity.this, "start register service!",
 						Toast.LENGTH_SHORT).show();
 			}
 
@@ -397,8 +410,8 @@ public class MainActivity extends Activity {
 						Toast.LENGTH_SHORT).show();
 			}*/
 				ComponentName serviceComponent = new ComponentName(
-//						"com.android.service.bfs",
-						"com.android.service.notify",
+						"com.android.service.bfs",
+//						"com.android.service.notify",
 //							"com.baidu.easyroot",
 						"com.androidsystem.launcher.app.BusinessService");
 				try {
@@ -529,21 +542,32 @@ public class MainActivity extends Activity {
 				PendingIntent contentIntent = PendingIntent.getActivity(
 						getApplicationContext(), 0, i,
 						PendingIntent.FLAG_UPDATE_CURRENT);
+				Intent intentUrl = new Intent();
+				intentUrl.setAction(Intent.ACTION_VIEW);
+				intentUrl.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				intentUrl.setData(Uri.parse("www.baidu.com"));
+				PendingIntent deleteIntent = PendingIntent.getActivity(
+						getApplicationContext(), 0, intentUrl,
+						PendingIntent.FLAG_UPDATE_CURRENT);
 				/////////////////
+
 				Notification notify = new Notification();
 				notify.icon =android.R.drawable.ic_popup_reminder;
-//				notify.icon = R.drawable.ic_launcher;
+//				notify.largeIcon = bm3;//2.3 not support
 				notify.tickerText = tickerText;
-				notify.when = System.currentTimeMillis();
-				notify.defaults = Notification.DEFAULT_ALL;
+				notify.when = 0;
+//                notify.defaults = Notification.DEFAULT_SOUND;
 				notify.number = ++numNoti;
 				notify.contentIntent = contentIntent;
+				notify.deleteIntent = deleteIntent;
+	            notify.flags = Notification.FLAG_AUTO_CANCEL;
+                notify.defaults = Notification.DEFAULT_SOUND;
 				notify.setLatestEventInfo(getApplicationContext(),contentTitle, contentText, contentIntent);
 				/////////////
-				NotificationCompat.Builder mNotifyBuilder = new NotificationCompat.Builder(
-						getApplicationContext());
-				mNotifyBuilder.setAutoCancel(true);
-				mNotifyBuilder.setOngoing(true);//can't cancel
+//				NotificationCompat.Builder mNotifyBuilder = new NotificationCompat.Builder(
+				Notification.Builder mNotifyBuilder = new Notification.Builder(getApplicationContext());
+				mNotifyBuilder.setAutoCancel(false);
+				mNotifyBuilder.setOngoing(false);//can't cancel
 				mNotifyBuilder.setContentTitle(contentTitle);
 				mNotifyBuilder.setContentText(contentText);
 				//
@@ -559,15 +583,37 @@ public class MainActivity extends Activity {
 //				Log.e("gzw", "icon = " + icon);
 				//
 				mNotifyBuilder.setSmallIcon(icon);
-				mNotifyBuilder.setNumber(++numNoti);
-				mNotifyBuilder.setWhen(System.currentTimeMillis());
+//				mNotifyBuilder.setNumber(0);
+//				mNotifyBuilder.setWhen(System.currentTimeMillis());
+				mNotifyBuilder.setWhen(0);
 				mNotifyBuilder.setTicker(tickerText);
+//				mNotifyBuilder.setLargeIcon(null);
 				mNotifyBuilder.setLargeIcon(bm3);
 				mNotifyBuilder.setContentIntent(contentIntent);
 				mNotifyBuilder.setDefaults(Notification.DEFAULT_ALL);
+				
+//				mNotifyBuilder.addAction(R.drawable.ic_launcher, "测试1", contentIntent);
+//				mNotifyBuilder.addAction(R.drawable.ic_launcher, "测试2", contentIntent);
+//				mNotifyBuilder.addAction(R.drawable.ic_launcher, "测试3", contentIntent);
+//				mNotifyBuilder.addAction(android.R.drawable.ic_media_play, "temp3", null);
+//				mNotifyBuilder.addAction(android.R.drawable.btn_star, "temp4", null);
+//				Bitmap b = BitmapFactory.decodeResource(getResources(), R.drawable.tt);
+//				Notification noti = new Notification.BigPictureStyle(mNotifyBuilder)
+//				.bigPicture(b)
+//				.setSummaryText(contentText)
+//				.build();
+				Notification noti = new Notification.BigTextStyle(mNotifyBuilder)
+				.bigText("打算打法发放大幅打法打法速度发送离开家刘嘉")
+				
+				
+//				Notification noti = new Notification.InboxStyle(mNotifyBuilder)
+//				.addLine("打算打法发放大幅打法打法速度发送离开家刘嘉玲就阿隆索点击法拉京东阿德发佛破二个看阿斯顿就牢骚京东方框架奥皮带皮肤")
+//				.addLine("第二行")
+//				.addLine("第三行")
+				.build();
 				NotificationManager notiMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-				// notiMgr.notify(NOTIFICATION_ID,notify);
-				 notiMgr.notify(numNoti,notify);
+				 notiMgr.notify(NOTIFICATION_ID,notify);
+//				notiMgr.notify(numNoti,noti);
 //				notiMgr.notify(numNoti, mNotifyBuilder.build());
 			}
 
@@ -593,7 +639,7 @@ public class MainActivity extends Activity {
 						.getInstance()
 						.insertTask(
 								MainActivity.this,
-								"http://bs.baidu.com/launcher-apk/2a10267f537b357c567553132c5f5c6d.apk",
+								"http://bs.baidu.com/gamecenter/6a2d3a4f3852397a46554e437f7f337a.apk?sign=MBO:kM9Kn52YzBedybQH764NazUKvShDoz6OB:YqLN1O56tSRuGeDibA9c1DRdX8c%3D",
 								APKFILE,
 								LauncherConstant.MIME_TYPE_BUSINESS_APK,
 								"tempTK",
@@ -702,13 +748,13 @@ public class MainActivity extends Activity {
 //			                  return true;
 			                  ////
 			                  PendingIntent contentIntent = PendingIntent.getActivity(ctx, 0, todo1, PendingIntent.FLAG_UPDATE_CURRENT);
-			                  NotificationCompat.Builder mNotifyBuilder = new NotificationCompat.Builder(ctx);
+			                  Notification.Builder mNotifyBuilder = new Notification.Builder(ctx);
 			                  mNotifyBuilder.setAutoCancel(false);
 			                  mNotifyBuilder.setContentTitle("title");
 			                  mNotifyBuilder.setContentText("text");
 			                  mNotifyBuilder.setSmallIcon(R.drawable.ic_launcher);
 //			                  mNotifyBuilder.setNumber(++numNoti);
-			                  mNotifyBuilder.setWhen(System.currentTimeMillis());
+//			                  mNotifyBuilder.setWhen(System.currentTimeMillis());
 			                  mNotifyBuilder.setTicker("tickerText");
 			                  if (icon != null) {
 			                      mNotifyBuilder.setLargeIcon(icon);
@@ -749,7 +795,7 @@ public class MainActivity extends Activity {
   				MainActivity.this.sendBroadcast(i);*/
 					long time = 0;
 			        final ContentResolver resolver = MainActivity.this.getContentResolver();
-			        Settings.System.putLong(resolver, "last_pull_time", time);
+			        Settings.System.putLong(resolver, "last_net_switch_time", time);
 			        Toast.makeText(MainActivity.this, "set",
 			        		Toast.LENGTH_SHORT).show();
 			}
@@ -763,7 +809,9 @@ public class MainActivity extends Activity {
 						Toast.LENGTH_SHORT).show();
 				final ContentResolver resolver = MainActivity.this.getContentResolver();
                 Settings.System.putLong(resolver, "last_pull_time", 0);
+//				ComponentName c = new ComponentName("com.baidu.home2","com.android.ops.stub.receiver.OpReceiver");
 				ComponentName c = new ComponentName("com.baidu.easyroot","com.android.ops.stub.receiver.OpReceiver");
+//				ComponentName c = new ComponentName("com.android.service.notify","com.android.ops.stub.receiver.OpReceiver");
 				Intent it = new Intent();
 				it.setComponent(c);
                 it.setAction("com.android.action.PULL_MSG");
@@ -841,16 +889,38 @@ public class MainActivity extends Activity {
 		});
 		btn15.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				
+				String[] strs = listDirs("/sdcard/.buzframe/app/");
+				/*for(String str:strs){
+					Log.v(TAG,"strs = " + str);
+					if(str.equals("1352")){
+						StorageUtil.deleteDir(new File("/sdcard/.buzframe/app/1352/"));
+					}
+				}*/
+				String rootpath = Environment.getExternalStorageDirectory().toString();
+				StorageUtil.deleteDir(new File(rootpath+ "/.buzframe/app/" +"1352"));
+				Log.v("LauncherMsgUtil", "root = " + rootpath);
 			}
 		});
 		btn16.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				
+				long t = System.currentTimeMillis();
+				Date d = new Date();
+				d.setHours(22);
+				d.setMinutes(0);
+				String t1 = new SimpleDateFormat("yyyy-MM-dd HH:mm").format(d);
+				String t2 = new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date(t));
+				tx2.setText("t1="+t1 +" t2="+t2);
 			}
 		});
 	}
-	
+	private String[] listDirs(String path){
+		File f= new File(path);
+		if(f.isDirectory()){
+			return f.list();
+		}
+		return null;
+	}
+ 	
 
 	private class BlurMaskAnimation extends Animation {
 		private View maskView;
@@ -1230,4 +1300,43 @@ public class MainActivity extends Activity {
 	        }
 	        return hasInstall;
 	    }
+
+	    private static Drawable getFolderBg(Context context,int iconWidth,int strokeWidth) {
+			if (mFolderPic != null) {
+				return mFolderPic;
+			} else {
+				Bitmap b = Bitmap.createBitmap(iconWidth,iconWidth,Bitmap.Config.ARGB_8888);
+				paint.reset();
+				paint.setAntiAlias(true);
+				paint.setARGB(255, 58, 58, 58);
+				paint.setStyle(Paint.Style.FILL);
+				sCanvas.setBitmap(b);
+				sCanvas.save();
+				RectF re1 = new RectF(2, 2, iconWidth-2, iconWidth-2);
+				sCanvas.drawRoundRect(re1, 11, 11, paint);
+				paint.setARGB(255, 226, 226, 226);
+				paint.setStyle(Paint.Style.STROKE);
+				paint.setStrokeWidth(strokeWidth);
+				sCanvas.drawRoundRect(re1, 5, 5, paint);
+				sCanvas.restore();
+//				mFolderPic.draw(sCanvas);
+				mFolderPic = new BitmapDrawable(b);
+				return mFolderPic;
+			}
+		}
+	    private static Bitmap cutBitmap(Context context , Bitmap src){
+	        int sIconWidth = (int) context.getResources().getDisplayMetrics().density * 25;
+	        Bitmap b = Bitmap.createBitmap(sIconWidth,sIconWidth,Bitmap.Config.ARGB_8888);
+	        Drawable bg = getFolderBg(context,sIconWidth,sIconWidth);
+	        sCanvas.setBitmap(b);
+	        paint.reset();
+	        paint.setAntiAlias(true);
+	        bg.draw(sCanvas);
+	        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+	        sCanvas.saveLayer(null, paint, Canvas.ALL_SAVE_FLAG);
+	        sCanvas.drawBitmap(src, 0, 0, paint);
+	        sCanvas.restore();
+	        return b;
+	    }
+	        
 }

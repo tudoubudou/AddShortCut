@@ -71,12 +71,18 @@
                 android:id="@+id/button12"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:text="add pref" />
+                android:text="todo12" />
             <Button
                 android:id="@+id/button13"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:text="rm pref" />
+                android:text="todo13" />
+            
+            <ProgressBar
+                android:id="@+id/progressBar1"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
         </LinearLayout>
 
         <LinearLayout
@@ -119,7 +125,7 @@
                 android:id="@+id/button11"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:text="todo" />
+                android:text="todo11" />
             <Button
                 android:id="@+id/button14"
                 android:layout_width="fill_parent"
