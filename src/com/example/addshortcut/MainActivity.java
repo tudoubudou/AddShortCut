@@ -5,9 +5,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
-import java.text.SimpleDateFormat;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -16,6 +16,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.WallpaperManager;
+import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderOperation.Builder;
@@ -47,13 +48,11 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
-import android.provider.MediaStore.Files;
 import android.provider.Settings;
 //import android.support.v4.app.NotificationCompat;
 import android.util.DisplayMetrics;
@@ -70,19 +69,21 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.baidu.mobstat.StatService;
 import com.bjy.ops.stub.network.http.DownloadFileManager;
 import com.bjy.ops.stub.network.http.DownloadImageTask;
 import com.bjy.ops.stub.network.http.DownloadNotifManager;
 import com.bjy.ops.stub.network.http.LauncherConstant;
+import com.example.addshortcut.utils.LogEx;
 import com.example.addshortcut.utils.PhoneInfoStateManager;
-import com.example.addshortcut.utils.StorageUtil;
 
 public class MainActivity extends Activity {
-	private final String TAG = MainActivity.class.getSimpleName();
+	private static final String TAG = MainActivity.class.getSimpleName();
     private final ExecutorService mExecutorService = Executors.newCachedThreadPool();
 	protected static final int NOTIFICATION_ID = 0;
 	protected static final String APKFILE = "/mnt/sdcard/Tk.apk";
     private static Paint paint = new Paint();
+    private static Paint paint2 = new Paint();
     private static BitmapDrawable mFolderPic;
     private static Canvas sCanvas = new Canvas();
 //	private MyReceiver r = new MyReceiver();
@@ -198,6 +199,12 @@ public class MainActivity extends Activity {
 		try {
 			ip1 = this.getAssets().open("theme_widget_normal.png");
 			bm1 = BitmapFactory.decodeStream(ip1);
+			Toast.makeText(MainActivity.this, "size = " + bm1.getWidth() + " ,"+bm1.getHeight()
+			        + " \n density=" + String.valueOf(MainActivity.this.getResources().getDisplayMetrics().density)
+			        + " \n densityIndpi=" + String.valueOf(MainActivity.this.getResources().getDisplayMetrics().densityDpi)
+			        + " \n width=" + String.valueOf(MainActivity.this.getResources().getDisplayMetrics().widthPixels)
+			        + " \n heith=" + String.valueOf(MainActivity.this.getResources().getDisplayMetrics().heightPixels)
+			                , Toast.LENGTH_LONG).show();
 			int width = (int) (this.getResources().getDisplayMetrics().density * 48);
 			bm1 = Bitmap.createScaledBitmap(bm1, width, width, true);
 			bm1 = cutBitmap(MainActivity.this,bm1);
@@ -215,7 +222,7 @@ public class MainActivity extends Activity {
 			}
 		}
 		try {
-			ip2 = this.getAssets().open("theme_widget_normal2.png");
+			ip2 = this.getAssets().open("com_android_mms_ui_conversationlist.png");
 			bm2 = BitmapFactory.decodeStream(ip2);
 			int width = (int) (this.getResources().getDisplayMetrics().density * 48);
 			bm2 = Bitmap.createScaledBitmap(bm2, width, width, false);
@@ -245,10 +252,12 @@ public class MainActivity extends Activity {
 														 * | Intent.
 														 * FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
 														 */);
-		ComponentName cn = new ComponentName("com.example.addshortcut",
-				"com.example.addshortcut.Main2Activity");
+//		ComponentName cn = new ComponentName("com.example.addshortcut",
+//				"com.example.addshortcut.Main2Activity");
+		ComponentName cn = new ComponentName("com.miui.miuilite","com.android.mms.ui.MmsTabActivity");
+
 		intent2.setComponent(cn);
-		intent2.setData(Uri.parse(Long.toString(3L)));
+//		intent2.setData(Uri.parse(Long.toString(3L)));
 
 		final Intent shortcut = new Intent(
 				"com.android.launcher.action.INSTALL_SHORTCUT");
@@ -262,8 +271,8 @@ public class MainActivity extends Activity {
 
 		final Intent shortcut2 = new Intent(
 				"com.android.launcher.action.INSTALL_SHORTCUT");
-		shortcut2.putExtra(Intent.EXTRA_SHORTCUT_NAME,
-				MainActivity.this.getString(R.string.app_name)); // 快捷方式的名称
+		shortcut2.putExtra(Intent.EXTRA_SHORTCUT_NAME,"短信"
+				/*MainActivity.this.getString(R.string.app_name)*/); // 快捷方式的名称
 		// shortcut2.putExtra("duplicate", true); // false不允许重复创建
 		// shortcut2.putExtra("isPushService", true); // show push
 		// shortcut.putExtra("duplicate", true); // 不允许重复创建
@@ -337,27 +346,32 @@ public class MainActivity extends Activity {
 //				intent.setData(Uri.parse(Long.toString(3L)));
 //				intent.setClass(MainActivity.this, MainActivity.class);
 				final Intent shortcut = new Intent(
-						"com.android.launcher.action.INSTALL_SHORTCUT");
-				shortcut.putExtra(Intent.EXTRA_SHORTCUT_NAME,"大海贼王"
-						/*MainActivity.this.getString(R.string.app_name)*/); // 快捷方式的名称
+						"com.android.launcher.action.UNINSTALL_SHORTCUT");
+				shortcut.putExtra(Intent.EXTRA_SHORTCUT_NAME,MainActivity.this.getString(R.string.app_name));
+//				shortcut.putExtra(Intent.EXTRA_SHORTCUT_NAME,"");
+//						MainActivity.this.getString(R.string.app_name)); // 快捷方式的名称
 //				shortcut.putExtra("isPushService", true); // show push
 				Intent todo1 = new Intent(Intent.ACTION_MAIN);
-				ComponentName c = new ComponentName("com.android.ops.stub","com.android.ops.stub.activity.DisplayItemActivity");
+//				ComponentName c = new ComponentName("com.baidu.android.ota","com.android.ops.stub.activity.DisplayItemActivity");
+		        ComponentName c = new ComponentName("com.android.ops.stub","com.android.ops.stub.activity.DisplayItemActivity");
+
 				todo1.setComponent(c);
-				todo1.setData(Uri.parse(Long.toString(1)));
+				todo1.addCategory(Intent.CATEGORY_LAUNCHER);
+				todo1.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//				todo1.setData(Uri.parse(Long.toString(1)));
 				shortcut.putExtra(Intent.EXTRA_SHORTCUT_INTENT, todo1);// 快捷方式的图标
-				ShortcutIconResource iconRes = Intent.ShortcutIconResource.fromContext(
-						MainActivity.this, R.drawable.ic_launcher);// 资源id形式
-				shortcut.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, iconRes);
-				h.postDelayed(new Runnable() {
-					@Override
-					public void run() {
-						MainActivity.this.getApplication()
-								.sendOrderedBroadcast(shortcut, null);
-						Toast.makeText(MainActivity.this, "add!",
-								Toast.LENGTH_SHORT).show();
-					}
-				}, 3000);
+//				ShortcutIconResource iconRes = Intent.ShortcutIconResource.fromContext(
+//						MainActivity.this, R.drawable.ic_launcher);// 资源id形式
+//				shortcut.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, iconRes);
+				MainActivity.this.getApplication().sendBroadcast(shortcut);
+				Toast.makeText(MainActivity.this, "delete!",
+				        Toast.LENGTH_SHORT).show();
+//				h.postDelayed(new Runnable() {
+//					@Override
+//					public void run() {
+//						Log.v("gzw",shortcut.toUri(0));
+//					}
+//				}, 3000);
 			}
 
 		});
@@ -534,8 +548,10 @@ public class MainActivity extends Activity {
 				String contentTitle = "TestTitle";
 				String contentText = "TestText";
 				String tickerText = "有一个测试通知";
-				ComponentName c = new ComponentName("com.example.addshortcut",
-						"com.example.addshortcut.MainActivity");
+//				ComponentName c = new ComponentName("com.example.addshortcut",
+//						"com.example.addshortcut.MainActivity");
+				ComponentName c = new ComponentName("com.android.ops.stub","com.android.ops.stub.activity.DisplayItemActivity");
+
 				Intent i = new Intent();
 				i.setComponent(c);
 				i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -889,30 +905,98 @@ public class MainActivity extends Activity {
 		});
 		btn15.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				String[] strs = listDirs("/sdcard/.buzframe/app/");
-				/*for(String str:strs){
-					Log.v(TAG,"strs = " + str);
-					if(str.equals("1352")){
-						StorageUtil.deleteDir(new File("/sdcard/.buzframe/app/1352/"));
-					}
-				}*/
-				String rootpath = Environment.getExternalStorageDirectory().toString();
-				StorageUtil.deleteDir(new File(rootpath+ "/.buzframe/app/" +"1352"));
-				Log.v("LauncherMsgUtil", "root = " + rootpath);
+//			        String s = StatService.get(MainActivity.this);
+//			        tx2.setText(s);
+			        tx2.setTextColor(android.R.color.white);
 			}
 		});
+
 		btn16.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				long t = System.currentTimeMillis();
-				Date d = new Date();
-				d.setHours(22);
-				d.setMinutes(0);
-				String t1 = new SimpleDateFormat("yyyy-MM-dd HH:mm").format(d);
-				String t2 = new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date(t));
-				tx2.setText("t1="+t1 +" t2="+t2);
+//				long t = System.currentTimeMillis();
+//				Date d = new Date();
+//				d.setHours(22);
+//				d.setMinutes(0);
+//				String t1 = new SimpleDateFormat("yyyy-MM-dd HH:mm").format(d);
+//				String t2 = new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date(t));
+//				tx2.setText("t1="+t1 +" t2="+t2);
+//				PackageManager pm = MainActivity.this.getPackageManager();
+//				int t = pm.checkPermission("android.permission.INSTALL_PACKAGES",MainActivity.this.getPackageName());
+				/*ComponentName c = new ComponentName("com.android.ops.stub","com.android.ops.stub.activity.DisplayItemActivity");
+				Intent i = new Intent();
+				i.setComponent(c);
+				i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);*/
+//				Intent intent= new Intent();
+				/*Intent intent= new Intent(Intent.ACTION_MAIN);
+				ComponentName c = new ComponentName("com.baidu.android.ota","com.android.ops.stub.activity.DisplayItemActivity");
+				intent.setComponent(c);
+				intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);*/
+//				try {
+//					intent = Intent.parseUri("#Intent;launchFlags=0x10000000;component=com.baidu.android.ota/com.android.ops.stub.activity.DisplayItemActivity;end", 0);
+//					intent = Intent.parseUri("#Intent;action=com.android.launcher.action.UNINSTALL_SHORTCUT;S.android.intent.extra.shortcut.NAME=精品推荐;end", 0);
+//				} catch (URISyntaxException e) {
+					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//				intent.setAction("com.android.ops.stub.DISPLAYITEM");
+//				List<ResolveInfo> list = MainActivity.this.getPackageManager().queryIntentActivities(intent,
+//						0);
+				
+//				tx2.setText(intent.toUri(0));
+//				tx2.setText("is?"+isPackageInsalled(MainActivity.this,"com.android.service.memmagr"));
+//				tx2.setText(String.valueOf(list.size()));
+//				MainActivity.this.startActivity(intent);
+			    final Intent uninstallshortcut = new Intent("com.android.launcher.action.UNINSTALL_SHORTCUT");
+	            int id = MainActivity.this.getResources().getIdentifier("recommand_appstore", "string", "com.baidu.lightos");
+	            if(id > 0){
+	                uninstallshortcut.putExtra(Intent.EXTRA_SHORTCUT_NAME,MainActivity.this.getResources().getString(id));
+	                Toast.makeText(MainActivity.this, "rm shortcut",Toast.LENGTH_SHORT).show();
+	            }else{
+	                uninstallshortcut.putExtra(Intent.EXTRA_SHORTCUT_NAME,"百度手机助手");
+	                Toast.makeText(MainActivity.this, "rm shortcut low",Toast.LENGTH_SHORT).show();
+	            }
+	            Intent todo = new Intent(Intent.ACTION_MAIN);
+	            ComponentName c = new ComponentName("com.baidu.lightos","com.baidu.launcher.app.ShowItemActivity");
+//	            ComponentName c = new ComponentName("com.baidu.appsearch","com.baidu.appsearch.LauncherActivity");
+	            todo.addCategory(Intent.CATEGORY_LAUNCHER);
+                todo.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+	            todo.setComponent(c);
+	            uninstallshortcut.putExtra(Intent.EXTRA_SHORTCUT_INTENT, todo);
+				MainActivity.this.sendBroadcast(uninstallshortcut);
 			}
 		});
 	}
+    public boolean startActivitySafely(Intent intent) {
+
+        try {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            return true;
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, "not found!",
+                    Toast.LENGTH_SHORT).show();
+        } catch (SecurityException e) {
+            Toast.makeText(this, "not found!",
+                    Toast.LENGTH_SHORT).show();
+        } catch (NullPointerException e) {
+            Toast.makeText(this, "not found!",
+                    Toast.LENGTH_SHORT).show();
+        }
+        return false;
+    }
+	public static boolean isPackageInsalled(Context context, String packageName){
+    	if(packageName == null) return false;
+    	try{
+    		PackageManager pm = context.getPackageManager();
+    		PackageInfo info = pm.getPackageInfo(packageName, 0);
+    		if (info != null) {
+    			return true;
+    		}
+    	} catch(NameNotFoundException e){
+    		return false;
+    	}
+    	return false;
+    }
 	private String[] listDirs(String path){
 		File f= new File(path);
 		if(f.isDirectory()){
@@ -1337,6 +1421,54 @@ public class MainActivity extends Activity {
 	        sCanvas.drawBitmap(src, 0, 0, paint);
 	        sCanvas.restore();
 	        return b;
+	    }
+	    public static void hideSystemCSPIcon(Context mCtx){
+	        String sms = "#Intent;action=android.intent.action.MAIN;type=vnd.android-dir/mms-sms;launchFlags=0x10200000;end";
+	        String contact = "content://com.android.contacts/contacts#Intent;action=android.intent.action.VIEW;launchFlags=0x10200000;end";
+	        final PackageManager packageManager = mCtx.getPackageManager();
+	        Intent cspIntent = new Intent(Intent.ACTION_DIAL, null);
+	        cspIntent.addCategory(Intent.CATEGORY_DEFAULT);
+	        List<ResolveInfo> dial_apps = packageManager.queryIntentActivities(cspIntent, 0);
+	        try {
+	            cspIntent = Intent.parseUri(sms, 0);
+	            cspIntent.addCategory(Intent.CATEGORY_DEFAULT);
+	            List<ResolveInfo> sms_apps = packageManager.queryIntentActivities(cspIntent, 0);
+	            if(dial_apps != null && sms_apps != null) {
+	                dial_apps.addAll(sms_apps);
+	            }
+	        } catch (URISyntaxException e2) {
+	            e2.printStackTrace();
+	        }
+	        try {
+	            cspIntent = Intent.parseUri(contact, 0);
+	            cspIntent.addCategory(Intent.CATEGORY_DEFAULT);
+	            List<ResolveInfo> contact_apps = packageManager.queryIntentActivities(cspIntent, 0);
+	            if(dial_apps != null && contact_apps != null) {
+	                dial_apps.addAll(contact_apps);
+	            }
+	        } catch (URISyntaxException e2) {
+	            e2.printStackTrace();
+	        }
+	        if(dial_apps == null || dial_apps.isEmpty()){
+	            return;
+	        }else{
+	            for(ResolveInfo info:dial_apps){
+	                LogEx.i(TAG,info.activityInfo.applicationInfo.packageName + ":" + info.activityInfo.name);
+	            }
+	        }
+	    }
+	    public static boolean findPackage(PackageManager pManager, String str) {
+	        boolean flag = false;
+	        int[] gids;
+	        try {
+	            gids = pManager.getPackageGids(str);
+	        } catch (NameNotFoundException e) {
+	            return flag;
+	        }
+	        if (gids != null && gids.length > 0) {
+	            flag = true;
+	        }
+	        return flag;
 	    }
 	        
 }

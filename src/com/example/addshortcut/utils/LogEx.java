@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.lang.ref.WeakReference;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -16,21 +18,26 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
+import android.os.Message;
 import android.util.Log;
-
-//import com.baidu.launcher.LauncherConfig;
 
 /**
  * Custom Log class, add catch exception and crash support
  */
 
 public class LogEx {
-    public static final String TAG = "BFS Business";
+    public static final String TAG = "Baidu LightOS";
+    public static final String DEBUG_KEY = "com.lightos.debug";
 
-    public static final String LOG_DIR = "BFSBusiness";
+    public static final String LOG_DIR = "BaiduLightOS";
     public static final String LOG_NAME = "log.txt";
 
     public static final String CRASH_TAG = "Crash";
+    
+    private static String prefix;
 
     /**
      * Define constants of log level
@@ -72,7 +79,7 @@ public class LogEx {
     /**
      * Flag of whether LogEntryWriterThread should exit.
      */
-    private static boolean sWriterThreadExit = false;
+//    public static boolean sWriterThreadExit = false;
 
     private static boolean sFlushNow = false;
 
@@ -88,16 +95,14 @@ public class LogEx {
      */
     private static final Timestamp sTimestamp = new Timestamp(System.currentTimeMillis());
 
-	public static final boolean DEBUG_ENABLE = true;
-
-    static {
-        if (DEBUG_ENABLE && SAVE_TO_FILE) {
-            new LogEntryWriterThread().start();
-        }
-        if (DEBUG_ENABLE && EXCEPTION_HANDLER_ENABLE) {
-            collectApplicationCrash();
-        }
-    }
+//    static {
+//        if (LightosConfig.DEBUG_ENABLE && SAVE_TO_FILE) {
+//            new LogEntryWriterThread().start();
+//        }
+//        if (LightosConfig.DEBUG_ENABLE && EXCEPTION_HANDLER_ENABLE) {
+//            collectApplicationCrash();
+//        }
+//    }
 
     public static void init(Context aContext) {
         sContext = new WeakReference<Context>(aContext);
@@ -259,26 +264,64 @@ public class LogEx {
     private static void collectLogEntry(LogEntry entry) {
         try {
             sLogEntryQueue.put(entry);
+            if (mWriteHandler != null) {
+            	mWriteHandler.sendEmptyMessage(LOGEX_WRITE_TOKEN);
+            }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    static class LogEntryWriterThread extends Thread {
-        @Override
-        public void run() {
-            while (!sWriterThreadExit) {
-                if (sLogEntryQueue.size() >= BATCH_SIZE) {
+    private static Looper sLooper = null;
+    private static WriteHandler mWriteHandler = null;
+    public static boolean DEBUG_ENABLE = true;
+    private static final int LOGEX_WRITE_TOKEN = 1;
+
+    static class WriteHandler extends Handler {
+
+    	public WriteHandler(Looper looper) {
+            super(looper);
+        }
+
+    	@Override
+        public void handleMessage(Message msg) {
+    		switch(msg.what) {
+    		case LOGEX_WRITE_TOKEN:
+    			if (sLogEntryQueue.size() >= BATCH_SIZE) {
                     writeLogEntryToFileByBatch(BATCH_SIZE);
                 } else if (sFlushNow && !sLogEntryQueue.isEmpty()) {
                     writeLogEntryToFileByBatch(sLogEntryQueue.size());
                 }
-            }
-            if (!sLogEntryQueue.isEmpty()) {
-                writeLogEntryToFileByBatch(sLogEntryQueue.size());
-            }
-        }
+    			break;
+    		}
+    	}
+    }
 
+    public static void startWriterThread(){
+    	startWriterThread("default");
+    }
+    public static void startWriterThread(String fileprefix){
+    	prefix = fileprefix;
+//    	synchronized (LogEx.class) {
+    		if (sLooper == null) {
+                HandlerThread thread = new HandlerThread("LogExThread-"+prefix);
+                thread.start();
+                sLooper = thread.getLooper();
+            }
+//    	}
+    	mWriteHandler = new WriteHandler(sLooper);
+    	mWriteHandler.sendEmptyMessage(LOGEX_WRITE_TOKEN);
+    }
+
+    public static void stopWriteLogs() {
+    	if (sLooper != null) {
+    		sLooper.quit();
+    	}
+    	sLooper = null;
+    	if (!sLogEntryQueue.isEmpty()) {
+            writeLogEntryToFileByBatch(sLogEntryQueue.size());
+        }
+        sLogFile =null;
     }
 
     public static String getTimestamp() {
@@ -301,7 +344,12 @@ public class LogEx {
                     dir.mkdir();
                 }
 
-                sLogFile = new File(dir.getAbsolutePath() + File.separator + LOG_NAME);
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
+                String filename = String.valueOf(System.currentTimeMillis());
+                if(prefix != null){
+                    filename = prefix + sdf.format(new Date())+".log";
+                }
+                sLogFile = new File(dir.getAbsolutePath() + File.separator + filename);
             }
 
             if (!sLogFile.exists()) {
@@ -356,7 +404,7 @@ public class LogEx {
             return true;
         }
 
-        if (DEBUG_ENABLE) {
+        if (DEBUG_ENABLE  || Log.isLoggable(DEBUG_KEY, Log.DEBUG)) {
             if (aLevel >= DEFAULT_LOG_LEVEL) {
                 return true;
             } else {
@@ -452,7 +500,7 @@ public class LogEx {
      * use LogEx to log any more.
      */
     public static void clear() {
-        sWriterThreadExit = true;
+    	stopWriteLogs();
         sLogEntryQueue.clear();
         sStringBuilder.setLength(0);
     }
