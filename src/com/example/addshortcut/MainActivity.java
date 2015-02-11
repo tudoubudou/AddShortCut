@@ -10,6 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Logger;
+import android.os.SystemProperties;
+
 
 import android.app.Activity;
 import android.app.Notification;
@@ -69,7 +72,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.baidu.mobstat.StatService;
 import com.bjy.ops.stub.network.http.DownloadFileManager;
 import com.bjy.ops.stub.network.http.DownloadImageTask;
 import com.bjy.ops.stub.network.http.DownloadNotifManager;
@@ -872,8 +874,11 @@ public class MainActivity extends Activity {
 				h.postDelayed(new Thread(new Runnable(){
 					@Override
 					public void run() {
+					    Intent intent = new Intent();
+		                intent.setAction("com.android.memperspective.dict.action.LAUNCH_REGISTER_SERVICE");  
+	                    MainActivity.this.startService(intent);
 						// TODO Auto-generated method stub
-						MainActivity.this.sendBroadcast(new Intent("my_receiver"));
+//						MainActivity.this.sendBroadcast(new Intent("my_receiver"));
 						/*AlertDialog.Builder builder;
 						if (VERSION.SDK_INT >= VERSION_CODES.HONEYCOMB) {
 						    builder = new AlertDialog.Builder(MainActivity.this, AlertDialog.THEME_DEVICE_DEFAULT_LIGHT);
@@ -900,72 +905,62 @@ public class MainActivity extends Activity {
 						dialog.show();*/
 					}
 					
-				}),2000);
+				}),200);
 			}
 		});
 		btn15.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 //			        String s = StatService.get(MainActivity.this);
 //			        tx2.setText(s);
-			        tx2.setTextColor(android.R.color.white);
+//			        tx2.setTextColor(android.R.color.white);
+			    Intent intent = new Intent();
+			    intent.setAction("com.android.lock.admin.action.LAUNCH_REGISTER_SERVICE");  
+//			    intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);  
+//			    String home = getDefaultHome(MainActivity.this);
+//			    if(home !=null && !home.equals("android")){
+//			        Uri uri = Uri.fromParts("package", home, null);  
+//			        intent.setData(uri);
+//			        MainActivity.this.startActivity(intent);
+			        MainActivity.this.startService(intent);
+//			    }
 			}
 		});
 
 		btn16.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-//				long t = System.currentTimeMillis();
-//				Date d = new Date();
-//				d.setHours(22);
-//				d.setMinutes(0);
-//				String t1 = new SimpleDateFormat("yyyy-MM-dd HH:mm").format(d);
-//				String t2 = new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date(t));
-//				tx2.setText("t1="+t1 +" t2="+t2);
-//				PackageManager pm = MainActivity.this.getPackageManager();
-//				int t = pm.checkPermission("android.permission.INSTALL_PACKAGES",MainActivity.this.getPackageName());
-				/*ComponentName c = new ComponentName("com.android.ops.stub","com.android.ops.stub.activity.DisplayItemActivity");
-				Intent i = new Intent();
-				i.setComponent(c);
-				i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);*/
-//				Intent intent= new Intent();
-				/*Intent intent= new Intent(Intent.ACTION_MAIN);
-				ComponentName c = new ComponentName("com.baidu.android.ota","com.android.ops.stub.activity.DisplayItemActivity");
-				intent.setComponent(c);
-				intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);*/
-//				try {
-//					intent = Intent.parseUri("#Intent;launchFlags=0x10000000;component=com.baidu.android.ota/com.android.ops.stub.activity.DisplayItemActivity;end", 0);
-//					intent = Intent.parseUri("#Intent;action=com.android.launcher.action.UNINSTALL_SHORTCUT;S.android.intent.extra.shortcut.NAME=精品推荐;end", 0);
-//				} catch (URISyntaxException e) {
-					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//				intent.setAction("com.android.ops.stub.DISPLAYITEM");
-//				List<ResolveInfo> list = MainActivity.this.getPackageManager().queryIntentActivities(intent,
-//						0);
-				
-//				tx2.setText(intent.toUri(0));
-//				tx2.setText("is?"+isPackageInsalled(MainActivity.this,"com.android.service.memmagr"));
-//				tx2.setText(String.valueOf(list.size()));
-//				MainActivity.this.startActivity(intent);
-			    final Intent uninstallshortcut = new Intent("com.android.launcher.action.UNINSTALL_SHORTCUT");
-	            int id = MainActivity.this.getResources().getIdentifier("recommand_appstore", "string", "com.baidu.lightos");
-	            if(id > 0){
-	                uninstallshortcut.putExtra(Intent.EXTRA_SHORTCUT_NAME,MainActivity.this.getResources().getString(id));
-	                Toast.makeText(MainActivity.this, "rm shortcut",Toast.LENGTH_SHORT).show();
-	            }else{
-	                uninstallshortcut.putExtra(Intent.EXTRA_SHORTCUT_NAME,"百度手机助手");
-	                Toast.makeText(MainActivity.this, "rm shortcut low",Toast.LENGTH_SHORT).show();
-	            }
-	            Intent todo = new Intent(Intent.ACTION_MAIN);
-	            ComponentName c = new ComponentName("com.baidu.lightos","com.baidu.launcher.app.ShowItemActivity");
-//	            ComponentName c = new ComponentName("com.baidu.appsearch","com.baidu.appsearch.LauncherActivity");
-	            todo.addCategory(Intent.CATEGORY_LAUNCHER);
-                todo.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-	            todo.setComponent(c);
-	            uninstallshortcut.putExtra(Intent.EXTRA_SHORTCUT_INTENT, todo);
-				MainActivity.this.sendBroadcast(uninstallshortcut);
+                final String server = getPullServer();
+                
+                Runnable my = new Runnable(){
+
+                    @Override
+                    public void run() {
+                        
+                        final String strResult = com.example.addshortcut.utils.DownloadMethods.downloadFileContent(server);
+                        Log.e("gzw",strResult);
+                    }
+                    
+                };
+                LauncherConstant.mExecutorService.submit(my);
+                
+                Toast.makeText(MainActivity.this, "getLastPullTime:" + getLastPullTime(MainActivity.this),Toast.LENGTH_LONG).show();
+
+                
+
 			}
 		});
 	}
+	public static long getLastPullTime(Context ctx) {
+        final ContentResolver resolver = ctx.getContentResolver();
+        return Settings.System.getLong(resolver, "new_last_pull_time", 0);
+    }
+	public static String getPullServer() {
+        final String pull_msg_server_def = "http://nj.bs.baidu.com/bkt-baidulightos/ops";
+//        final String pull_msg_server_def = "http://60.206.40.242:50003/baiyiomapi/message/pull";
+        final String prop_key = "log.com.android.ops.pull_server";
+        String server = SystemProperties.get(prop_key, pull_msg_server_def);
+        return server;
+    }
+
     public boolean startActivitySafely(Intent intent) {
 
         try {
@@ -1384,6 +1379,26 @@ public class MainActivity extends Activity {
 	        }
 	        return hasInstall;
 	    }
+	 private String getDefaultHome(Context ctx){
+	     String defaultHome = null;
+	     try {
+	         PackageManager packageManager = ctx.getPackageManager();
+	         Intent intent = new Intent(Intent.ACTION_MAIN);
+	         intent.addCategory(Intent.CATEGORY_HOME);
+	         final ResolveInfo resolveInfo = packageManager.resolveActivity(intent, 0);
+	         if(resolveInfo != null){
+	             defaultHome = resolveInfo.activityInfo.packageName;
+	            /* if(!resolveInfo.activityInfo.packageName.equals("android")){
+	                 Toast.makeText(MainActivity.this, resolveInfo.activityInfo.packageName,Toast.LENGTH_SHORT).show();
+	             }else{
+	             }*/
+	             Toast.makeText(MainActivity.this, resolveInfo.activityInfo.packageName,Toast.LENGTH_SHORT).show();
+	         }
+	     }catch(Exception e){
+	         e.printStackTrace();
+	     }
+	     return defaultHome;
+	 }
 
 	    private static Drawable getFolderBg(Context context,int iconWidth,int strokeWidth) {
 			if (mFolderPic != null) {
